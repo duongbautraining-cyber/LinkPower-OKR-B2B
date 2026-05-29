@@ -3,622 +3,1633 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>B2B Sales OKR Manager - v19</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@3.4.15"></script>
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <title>Hệ Thống Quản Lý OKR & CRM Cá Nhân - Code Version 19</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        .sidebar-btn-active {
-            background-color: #4f46e5 !important; /* Indigo-600 */
-            color: #ffffff !important;
+        /* Tối ưu hóa thanh cuộn mượt mà */
+        .scrollbar-none::-webkit-scrollbar {
+            display: none;
+        }
+        .scrollbar-none {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
         }
     </style>
 </head>
-<body class="bg-slate-50 font-sans text-slate-800">
+<body class="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-800">
 
-    <div class="flex h-screen overflow-hidden w-full">
-        <div class="w-64 bg-slate-900 text-slate-100 flex flex-col justify-between shadow-xl flex-shrink-0">
-            <div class="p-5">
-                <div class="flex items-center gap-3 mb-8">
-                    <div class="bg-indigo-600 p-2 rounded-xl text-white">
-                        <i data-lucide="trending-up" class="w-6 h-6"></i>
-                    </div>
-                    <h1 class="text-lg font-bold tracking-wider text-white">B2B OKR Portal</h1>
-                </div>
-                <nav class="space-y-1">
-                    <button onclick="switchTab('dashboard')" id="btn-dashboard" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left text-sm font-medium transition hover:bg-slate-800 text-slate-300 sidebar-btn-active">
-                        <i data-lucide="layout-dashboard" class="w-5 h-5"></i> Dashboard Tổng Hợp
-                    </button>
-                    <button onclick="switchTab('okrs')" id="btn-okrs" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left text-sm font-medium transition hover:bg-slate-800 text-slate-300">
-                        <i data-lucide="target" class="w-5 h-5"></i> Quản Lý OKRs
-                    </button>
-                    <button onclick="switchTab('revenue')" id="btn-revenue" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left text-sm font-medium transition hover:bg-slate-800 text-slate-300">
-                        <i data-lucide="dollar-sign" class="w-5 h-5"></i> Doanh Thu Sales
-                    </button>
-                    <button onclick="switchTab('customers')" id="btn-customers" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left text-sm font-medium transition hover:bg-slate-800 text-slate-300">
-                        <i data-lucide="users" class="w-5 h-5"></i> Khách Hàng B2B
-                    </button>
-                    <button onclick="switchTab('tasks')" id="btn-tasks" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left text-sm font-medium transition hover:bg-slate-800 text-slate-300">
-                        <i data-lucide="check-square" class="w-5 h-5"></i> Task Công Việc
-                    </button>
-                </nav>
-            </div>
-            <div class="p-4 border-t border-slate-800 text-xs text-slate-500 text-center font-medium">
-                Code Version 19 • GitHub Ready
+    <!-- Toast Notification -->
+    <div id="toast-container" class="fixed top-4 right-4 z-50 transition-all transform duration-300 hidden">
+        <div id="toast-box" class="flex items-center p-4 rounded-xl shadow-lg text-white">
+            <span id="toast-icon" class="font-medium mr-2">✓</span>
+            <span id="toast-message">Thông báo hiển thị ở đây!</span>
+        </div>
+    </div>
+
+    <!-- Custom Confirm Modal (Thay thế cho alert/confirm mặc định) -->
+    <div id="confirm-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl border border-slate-100 animate-in fade-in zoom-in-95 duration-200">
+            <h3 class="text-lg font-bold text-slate-900">Xác nhận thao tác</h3>
+            <p id="confirm-text" class="text-sm text-slate-600 mt-2">Bạn có chắc chắn muốn xóa mục này?</p>
+            <div class="flex justify-end gap-3 pt-4 mt-4 border-t border-slate-100">
+                <button id="confirm-cancel-btn" class="px-4 py-2 border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-xl text-xs font-semibold">Hủy bỏ</button>
+                <button id="confirm-ok-btn" class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-semibold">Xóa ngay</button>
             </div>
         </div>
+    </div>
 
-        <div class="flex-1 flex flex-col overflow-y-auto">
-            <header class="bg-white border-b border-slate-200 px-8 py-4 flex justify-between items-center sticky top-0 z-10 shadow-xs">
-                <div class="flex items-center gap-4">
-                    <h2 id="page-title" class="text-xl font-bold text-slate-800">Dashboard Tổng Hợp</h2>
-                    <div class="flex items-center gap-2 ml-4 bg-slate-100 px-3 py-1.5 rounded-xl text-xs border border-slate-200">
-                        <i data-lucide="filter" class="w-3.5 h-3.5 text-slate-500"></i>
-                        <select id="global-filter-quarter" onchange="applyGlobalFilter()" class="bg-transparent focus:outline-none font-semibold text-slate-700 cursor-pointer">
-                            <option value="all">Tất cả Quý</option>
-                            <option value="Q2">Quý 2 (Hiện tại)</option>
-                            <option value="Q1">Quý 1</option>
-                            <option value="Q3">Quý 3</option>
-                            <option value="Q4">Quý 4</option>
-                        </select>
-                    </div>
+    <!-- Header Bar -->
+    <header class="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white shadow-md sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="flex items-center space-x-3">
+                <div class="bg-indigo-600 p-2 rounded-lg text-white font-bold text-xl tracking-wider shadow">
+                    🚀 OKR
                 </div>
-                <div class="flex items-center gap-4">
-                    <button onclick="clearAllData()" class="text-xs text-rose-500 hover:text-rose-700 font-semibold flex items-center gap-1 transition">
-                        <i data-lucide="refresh-cw" class="w-3 h-3"></i> Tải lại dữ liệu gốc
-                    </button>
-                    <span class="text-xs bg-indigo-50 text-indigo-600 px-3 py-1.5 rounded-full font-semibold border border-indigo-100">B2B Freelance Portal</span>
+                <div>
+                    <h1 class="text-xl font-bold tracking-tight">Hệ Thống OKR & CRM Cá Nhân</h1>
+                    <p class="text-xs text-indigo-200">Code Version 19 - Phát hành độc lập trên GitHub Pages</p>
                 </div>
-            </header>
+            </div>
 
-            <main class="p-8 space-y-6">
-
-                <div id="tab-dashboard" class="tab-content space-y-6">
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
-                            <div>
-                                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Doanh Số Thực Đạt</p>
-                                <h3 id="widget-revenue" class="text-2xl font-black text-slate-900 mt-1">0đ</h3>
-                            </div>
-                            <div class="bg-emerald-50 p-3 rounded-xl text-emerald-600 border border-emerald-100"><i data-lucide="circle-dollar-sign"></i></div>
-                        </div>
-                        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
-                            <div>
-                                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Khách Hàng Mới</p>
-                                <h3 id="widget-customers" class="text-2xl font-black text-slate-900 mt-1">0</h3>
-                            </div>
-                            <div class="bg-indigo-50 p-3 rounded-xl text-indigo-600 border border-indigo-100"><i data-lucide="users"></i></div>
-                        </div>
-                        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
-                            <div>
-                                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Tiến Độ OKRs</p>
-                                <h3 id="widget-okr-progress" class="text-2xl font-black text-slate-900 mt-1">0%</h3>
-                            </div>
-                            <div class="bg-amber-50 p-3 rounded-xl text-amber-600 border border-amber-100"><i data-lucide="milestone"></i></div>
-                        </div>
-                        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
-                            <div>
-                                <p class="text-xs font-bold text-slate-400 uppercase tracking-wider">Nhiệm Vụ Đã Xong</p>
-                                <h3 id="widget-tasks" class="text-2xl font-black text-slate-900 mt-1">0%</h3>
-                            </div>
-                            <div class="bg-purple-50 p-3 rounded-xl text-purple-600 border border-purple-100"><i data-lucide="check-circle-2"></i></div>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs">
-                            <h4 class="text-base font-bold mb-4 flex items-center gap-2 text-slate-800"><i data-lucide="target" class="text-indigo-500"></i> Mục Tiêu & Key Results Trọng Điểm</h4>
-                            <div id="dashboard-okr-list" class="space-y-5"></div>
-                        </div>
-                        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs">
-                            <h4 class="text-base font-bold mb-4 flex items-center gap-2 text-slate-800"><i data-lucide="layers" class="text-emerald-500"></i> Trạng Thái Hợp Đồng Doanh Thu</h4>
-                            <div id="dashboard-revenue-summary" class="space-y-3"></div>
-                        </div>
-                    </div>
+            <!-- Quick Stats Banner -->
+            <div class="flex flex-wrap items-center gap-4 bg-slate-800/60 p-2 rounded-lg border border-slate-700">
+                <div class="text-center px-3 border-r border-slate-700">
+                    <span class="block text-[10px] text-slate-400">Tiến độ OKR</span>
+                    <span id="header-okr-progress" class="text-sm font-semibold text-emerald-400">0%</span>
                 </div>
-
-                <div id="tab-okrs" class="tab-content hidden space-y-6">
-                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs">
-                        <div class="flex justify-between items-center mb-6">
-                            <h3 class="text-base font-bold text-slate-800">Cấu Trúc Hệ Thống OKRs</h3>
-                            <button onclick="openModal('okr-modal')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-xs transition"><i data-lucide="plus" class="w-4 h-4"></i> Thêm Mục Tiêu</button>
-                        </div>
-                        <div class="overflow-x-auto border border-slate-100 rounded-xl">
-                            <table class="w-full text-left border-collapse">
-                                <thead>
-                                    <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase text-xs font-bold tracking-wider">
-                                        <th class="p-4">Quý</th>
-                                        <th class="p-4">Mục Tiêu Thắt Lõi (Objective / Key Result)</th>
-                                        <th class="p-4">Hiện Tại / Chỉ Tiêu</th>
-                                        <th class="p-4 w-1/4">Tiến Trình</th>
-                                        <th class="p-4 text-center">Hành Động</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="okr-table-body" class="text-sm divide-y divide-slate-100"></tbody>
-                            </table>
-                        </div>
-                    </div>
+                <div class="text-center px-3 border-r border-slate-700">
+                    <span class="block text-[10px] text-slate-400">Doanh thu đạt</span>
+                    <span id="header-revenue" class="text-sm font-semibold text-sky-400">0đ</span>
                 </div>
-
-                <div id="tab-revenue" class="tab-content hidden space-y-6">
-                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs">
-                        <div class="flex justify-between items-center mb-6">
-                            <h3 class="text-base font-bold text-slate-800">Danh Sách Hợp Đồng Doanh Thu</h3>
-                            <button onclick="openModal('revenue-modal')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-xs transition"><i data-lucide="plus" class="w-4 h-4"></i> Ghi Nhận Doanh Thu</button>
-                        </div>
-                        <div class="overflow-x-auto border border-slate-100 rounded-xl">
-                            <table class="w-full text-left border-collapse">
-                                <thead>
-                                    <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase text-xs font-bold tracking-wider">
-                                        <th class="p-4">Tên Hợp Đồng / Dự Án</th>
-                                        <th class="p-4">Giá Trị Doanh Thu</th>
-                                        <th class="p-4">Trạng Thái</th>
-                                        <th class="p-4">Phân Bổ Quý</th>
-                                        <th class="p-4 text-center">Hành Động</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="revenue-table-body" class="text-sm divide-y divide-slate-100"></tbody>
-                            </table>
-                        </div>
-                    </div>
+                <div class="text-center px-3">
+                    <span class="block text-[10px] text-slate-400">Hài lòng CSKH</span>
+                    <span id="header-rating" class="text-sm font-semibold text-yellow-400">⭐ 0.0</span>
                 </div>
+            </div>
+        </div>
+    </header>
 
-                <div id="tab-customers" class="tab-content hidden space-y-6">
-                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs">
-                        <div class="flex justify-between items-center mb-6">
-                            <h3 class="text-base font-bold text-slate-800">Quản Lý Khách Hàng B2B</h3>
-                            <button onclick="openModal('customer-modal')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-xs transition"><i data-lucide="plus" class="w-4 h-4"></i> Thêm Khách Hàng</button>
-                        </div>
-                        <div class="overflow-x-auto border border-slate-100 rounded-xl">
-                            <table class="w-full text-left border-collapse">
-                                <thead>
-                                    <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase text-xs font-bold tracking-wider">
-                                        <th class="p-4">Tên Khách Hàng / Công Ty</th>
-                                        <th class="p-4">Phân Loại Nhóm</th>
-                                        <th class="p-4">Liên Hệ</th>
-                                        <th class="p-4 text-center">Hành Động</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="customer-table-body" class="text-sm divide-y divide-slate-100"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="tab-tasks" class="tab-content hidden space-y-6">
-                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs">
-                        <div class="flex justify-between items-center mb-6">
-                            <h3 class="text-base font-bold text-slate-800">Hành Động & Task Thúc Đẩy OKR</h3>
-                            <button onclick="openModal('task-modal')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-xs transition"><i data-lucide="plus" class="w-4 h-4"></i> Thêm Thêm Task</button>
-                        </div>
-                        <div class="overflow-x-auto border border-slate-100 rounded-xl">
-                            <table class="w-full text-left border-collapse">
-                                <thead>
-                                    <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase text-xs font-bold tracking-wider">
-                                        <th class="p-4">Nhiệm Vụ</th>
-                                        <th class="p-4">Liên Kết Mục Tiêu</th>
-                                        <th class="p-4">Hạn Chót</th>
-                                        <th class="p-4">Trạng Thái</th>
-                                        <th class="p-4 text-center">Hành Động</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="task-table-body" class="text-sm divide-y divide-slate-100"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-            </main>
+    <!-- Navigation Tabs Bar -->
+    <div class="bg-white border-b border-slate-200 shadow-sm sticky top-[72px] z-30">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <nav id="nav-tabs" class="flex space-x-2 md:space-x-4 py-3 overflow-x-auto scrollbar-none" aria-label="Tabs">
+                <button onclick="OKR_APP.changeTab('dashboard')" data-tab="dashboard" class="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors shrink-0 bg-indigo-100 text-indigo-700">
+                    📊 Báo cáo & Dashboard
+                </button>
+                <button onclick="OKR_APP.changeTab('okrs')" data-tab="okrs" class="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors shrink-0 text-slate-600 hover:text-slate-900 hover:bg-slate-100">
+                    🎯 Quản lý OKR
+                </button>
+                <button onclick="OKR_APP.changeTab('sales')" data-tab="sales" class="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors shrink-0 text-slate-600 hover:text-slate-900 hover:bg-slate-100">
+                    💰 Bán hàng (Doanh số)
+                </button>
+                <button onclick="OKR_APP.changeTab('customers')" data-tab="customers" class="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors shrink-0 text-slate-600 hover:text-slate-900 hover:bg-slate-100">
+                    👥 Khách hàng (CRM)
+                </button>
+                <button onclick="OKR_APP.changeTab('cskh')" data-tab="cskh" class="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors shrink-0 text-slate-600 hover:text-slate-900 hover:bg-slate-100">
+                    🤝 Chăm sóc KH (CSKH)
+                </button>
+                <button onclick="OKR_APP.changeTab('tasks')" data-tab="tasks" class="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors shrink-0 text-slate-600 hover:text-slate-900 hover:bg-slate-100">
+                    📋 Công việc (Tasks)
+                </button>
+            </nav>
         </div>
     </div>
 
-    <div id="okr-modal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl space-y-4">
-            <h3 class="text-base font-bold text-slate-900">Tạo Mới Thành Phần OKR</h3>
-            <form id="okr-form" onsubmit="handleFormSubmit(event, 'okr')" class="space-y-4">
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Cấp Độ Phân Loại</label>
-                    <select id="okr-type" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm bg-white" onchange="toggleOkrFields()">
-                        <option value="Objective">Mục Tiêu (Objective)</option>
-                        <option value="KR">Kết Quả Cốt Yếu (Key Result)</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Nội Dung Chi Tiết</label>
-                    <input type="text" id="okr-title" required class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-indigo-600">
-                </div>
-                <div id="kr-fields" class="hidden grid grid-cols-3 gap-3">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Hiện tại</label>
-                        <input type="number" id="okr-current" value="0" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Chỉ tiêu</label>
-                        <input type="number" id="okr-target" value="100" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Đơn vị</label>
-                        <input type="text" id="okr-unit" value="đ" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm">
-                    </div>
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Chu Kỳ Áp Dụng</label>
-                    <select id="okr-quarter" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm bg-white">
-                        <option value="Q2">Quý 2</option>
-                        <option value="Q1">Quý 1</option>
-                        <option value="Q3">Quý 3</option>
-                        <option value="Q4">Quý 4</option>
-                    </select>
-                </div>
-                <div class="flex justify-end gap-2 pt-2">
-                    <button type="button" onclick="closeModal('okr-modal')" class="px-4 py-2 border border-slate-200 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-50">Hủy</button>
-                    <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-semibold hover:bg-indigo-700">Lưu thông tin</button>
-                </div>
-            </form>
+    <!-- Main Content Area -->
+    <main class="flex-grow max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-6">
+        <div id="tab-content" class="space-y-6">
+            <!-- Nội dung các tab sẽ được hiển thị động bằng JS ở đây -->
+        </div>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-white border-t border-slate-200 py-6 mt-12">
+        <div class="max-w-7xl mx-auto px-4 text-center text-xs text-slate-400">
+            <p>© 2026 OKR & CRM Personal Workspace (Code Version 19). Được thiết kế chạy độc lập và tối ưu nhất.</p>
+        </div>
+    </footer>
+
+    <!-- DYNAMIC MODAL CONTAINER -->
+    <div id="modal-wrapper" class="fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 hidden">
+        <div id="modal-container" class="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-xl border border-slate-100">
+            <!-- Form nội dung các loại modal sẽ được bơm vào đây bằng JS -->
         </div>
     </div>
 
-    <div id="revenue-modal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl space-y-4">
-            <h3 class="text-base font-bold text-slate-900">Ghi Nhận Doanh Thu Mới</h3>
-            <form id="revenue-form" onsubmit="handleFormSubmit(event, 'revenue')" class="space-y-4">
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Tên Dự Án / Khách Hàng</label>
-                    <input type="text" id="rev-name" required class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Giá Trị Giao Dịch (VNĐ)</label>
-                    <input type="number" id="rev-value" required class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Trạng Thái Hợp Đồng</label>
-                    <select id="rev-stage" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm bg-white">
-                        <option value="Đã Thu Tiền / Hoàn Thành">Đã Thu Tiền / Hoàn Thành</option>
-                        <option value="Đang Triển Khai / Chờ Thu">Đang Triển Khai / Chờ Thu</option>
-                        <option value="Đang Thương Lượng Báo Giá">Đang Thương Lượng Báo Giá</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Thuộc Quý Hạch Toán</label>
-                    <select id="rev-quarter" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm bg-white">
-                        <option value="Q2">Quý 2</option>
-                        <option value="Q1">Quý 1</option>
-                        <option value="Q3">Quý 3</option>
-                        <option value="Q4">Quý 4</option>
-                    </select>
-                </div>
-                <div class="flex justify-end gap-2 pt-2">
-                    <button type="button" onclick="closeModal('revenue-modal')" class="px-4 py-2 border border-slate-200 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-50">Hủy</button>
-                    <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-semibold hover:bg-indigo-700">Ghi nhận</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <div id="customer-modal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl space-y-4">
-            <h3 class="text-base font-bold text-slate-900">Thêm Khách Hàng B2B</h3>
-            <form id="customer-form" onsubmit="handleFormSubmit(event, 'customer')" class="space-y-4">
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Tên Công Ty / Doanh Nhân</label>
-                    <input type="text" id="cust-company" required class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Nhóm Phân Loại</label>
-                    <select id="cust-type" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm bg-white">
-                        <option value="Khách Hàng VIP">Khách Hàng VIP</option>
-                        <option value="Khách Hàng Đối Tác Tiêu Chuẩn">Khách Hàng Đối Tác Tiêu Chuẩn</option>
-                        <option value="Khách Hàng Tiềm Năng Chờ Tiếp Cận">Khách Hàng Tiềm Năng Chờ Tiếp Cận</option>
-                    </select>
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Thông Tin Liên Hệ (SĐT/Email)</label>
-                    <input type="text" id="cust-contact" required class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm">
-                </div>
-                <div class="flex justify-end gap-2 pt-2">
-                    <button type="button" onclick="closeModal('customer-modal')" class="px-4 py-2 border border-slate-200 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-50">Hủy</button>
-                    <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-semibold hover:bg-indigo-700">Lưu lại</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <div id="task-modal" class="fixed inset-0 bg-black/50 hidden flex items-center justify-center z-50 p-4">
-        <div class="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl space-y-4">
-            <h3 class="text-base font-bold text-slate-900">Thêm Task Công Việc</h3>
-            <form id="task-form" onsubmit="handleFormSubmit(event, 'task')" class="space-y-4">
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Nội Dung Công Việc</label>
-                    <input type="text" id="task-title" required class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Liên Kết Tới Mục Tiêu OKR</label>
-                    <select id="task-okr-link" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm bg-white"></select>
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Hạn Chót Thực Hiện</label>
-                    <input type="date" id="task-deadline" required class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm">
-                </div>
-                <div class="flex justify-end gap-2 pt-2">
-                    <button type="button" onclick="closeModal('task-modal')" class="px-4 py-2 border border-slate-200 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-50">Hủy</button>
-                    <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-semibold hover:bg-indigo-700">Tạo Task</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
+    <!-- MAIN APP JAVASCRIPT (Code Version 19 Core Engine) -->
     <script>
-        // Đồng bộ dữ liệu gốc từ file của bạn
-        const defaultOKRs = [
-            { id: "o1", type: "Objective", title: "Bứt phá thu nhập Freelance & Đạt mục tiêu tài chính Quý 2", quarter: "Q2", current: 0, target: 0, unit: "" },
-            { id: "k1", type: "KR", title: "Doanh số bán hàng đạt 100,000,000đ", quarter: "Q2", current: 60000000, target: 100000000, unit: "đ" },
-            { id: "k2", type: "KR", title: "Ký mới 5 khách hàng thuộc nhóm VIP", quarter: "Q2", current: 2, target: 5, unit: "khách" },
-            { id: "k3", type: "KR", title: "Tỷ lệ hài lòng CSKH đạt tối thiểu 4.5/5 sao", quarter: "Q2", current: 4.7, target: 5, unit: "sao" }
+        // Khởi tạo các bộ dữ liệu mẫu mặc định ban đầu
+        const DEFAULT_OKRS = [
+            {
+                id: 'okr-1',
+                objective: 'Bứt phá thu nhập Freelance & Đạt mục tiêu tài chính Quý 2',
+                startDate: '2026-04-01',
+                endDate: '2026-06-30',
+                keyResults: [
+                    { id: 'kr-1-1', text: 'Doanh số bán hàng đạt 100,000,000đ', current: 60000000, target: 100000000, unit: 'đ', autoLink: 'sales' },
+                    { id: 'kr-1-2', text: 'Ký mới 5 khách hàng thuộc nhóm VIP', current: 2, target: 5, unit: 'khách', autoLink: 'customers-vip' },
+                    { id: 'kr-1-3', text: 'Tỷ lệ hài lòng CSKH đạt tối thiểu 4.5/5 sao', current: 4.7, target: 5, unit: 'sao', autoLink: 'cskh-rating' }
+                ]
+            },
+            {
+                id: 'okr-2',
+                objective: 'Nâng cao thương hiệu cá nhân và kỹ năng chuyên môn',
+                startDate: '2026-04-01',
+                endDate: '2026-06-30',
+                keyResults: [
+                    { id: 'kr-2-1', text: 'Hoàn thành 3 khóa học chuyên sâu UI/UX', current: 2, target: 3, unit: 'khóa', autoLink: 'manual' },
+                    { id: 'kr-2-2', text: 'Viết và đăng tải 12 bài viết chuyên môn trên Blog/LinkedIn', current: 6, target: 12, unit: 'bài', autoLink: 'manual' },
+                    { id: 'kr-2-3', text: 'Hoàn thành 100% các công việc quan trọng độ ưu tiên Cao', current: 3, target: 5, unit: 'task', autoLink: 'tasks-high' }
+                ]
+            }
         ];
 
-        const defaultRevenue = [
-            { id: "r1", name: "Hợp đồng thiết kế UI/UX - VinGroup", value: 45000000, stage: "Đã Thu Tiền / Hoàn Thành", quarter: "Q2" },
-            { id: "r2", name: "Gói bảo trì hệ thống Techcombank", value: 15000000, stage: "Đã Thu Tiền / Hoàn Thành", quarter: "Q2" },
-            { id: "r3", name: "Dự án phát triển Web App E-Commerce", value: 40000000, stage: "Đang Triển Khai / Chờ Thu", quarter: "Q2" }
+        const DEFAULT_SALES = [
+            { id: 'sale-1', customerName: 'Nguyễn Văn A', amount: 45000000, date: '2026-05-10', product: 'Thiết kế Web App E-commerce', status: 'Đã thanh toán' },
+            { id: 'sale-2', customerName: 'Trần Thị B', amount: 15000000, date: '2026-05-18', product: 'Tư vấn trải nghiệm người dùng (UX)', status: 'Đã thanh toán' },
+            { id: 'sale-3', customerName: 'Lê Hoàng C', amount: 35000000, date: '2026-05-25', product: 'Setup hệ thống CRM bán hàng', status: 'Chờ thanh toán' },
+            { id: 'sale-4', customerName: 'Phạm Minh D', amount: 8000000, date: '2026-04-15', product: 'Thiết kế Landing Page tuyển dụng', status: 'Đã thanh toán' }
         ];
 
-        const defaultCustomers = [
-            { id: "c1", company: "Tập Đoàn VinGroup", type: "Khách Hàng VIP", contact: "0901234567 / info@vingroup.com" },
-            { id: "c2", company: "Techcombank Head Office", type: "Khách Hàng VIP", contact: "hr@techcombank.com.vn" },
-            { id: "c3", company: "Công ty Giải Pháp Số ABC", type: "Khách Hàng Đối Tác Tiêu Chuẩn", contact: "contact@abc.vn" }
+        const DEFAULT_CUSTOMERS = [
+            { id: 'cust-1', name: 'Nguyễn Văn A', phone: '0901234567', email: 'nva@company.com', segment: 'VIP', notes: 'Đối tác lớn, liên hệ chính dự án Web App' },
+            { id: 'cust-2', name: 'Trần Thị B', phone: '0912345678', email: 'ttb@agency.vn', segment: 'Thường', notes: 'Khách hàng giới thiệu từ bạn bè' },
+            { id: 'cust-3', name: 'Lê Hoàng C', phone: '0987654321', email: 'lhc@enterprise.com', segment: 'VIP', notes: 'Doanh nghiệp FDI, rất quan tâm bảo mật' },
+            { id: 'cust-4', name: 'Phạm Minh D', phone: '0933445566', email: 'pmd@startup.io', segment: 'Mới', notes: 'Startup trẻ, ngân sách ban đầu hạn chế' }
         ];
 
-        const defaultTasks = [
-            { id: "t1", title: "Hoàn thiện nốt 2 Module thanh toán cho đối tác Web App", okrLink: "Doanh số bán hàng đạt 100,000,000đ", deadline: "2026-06-15", status: "Chưa xong" },
-            { id: "t2", title: "Gửi khảo sát đo lường độ hài lòng khách hàng sau nghiệm thu", okrLink: "Tỷ lệ hài lòng CSKH đạt tối thiểu 4.5/5 sao", deadline: "2026-05-30", status: "Đã xong" }
+        const DEFAULT_CSKH = [
+            { id: 'cskh-1', customerName: 'Nguyễn Văn A', date: '2026-05-12', channel: 'Gặp trực tiếp', content: 'Trao đổi về thiết kế layout trang chủ, khách rất ưng ý tông màu xanh Navy.', rating: 5 },
+            { id: 'cskh-2', customerName: 'Trần Thị B', date: '2026-05-20', channel: 'Gọi điện thoại', content: 'Hỏi thăm trải nghiệm sau 2 tuần bàn giao. Khách đề xuất thêm tài liệu hướng dẫn nhanh.', rating: 4 },
+            { id: 'cskh-3', customerName: 'Lê Hoàng C', date: '2026-05-28', channel: 'Email', content: 'Gửi bản dự thảo điều khoản thanh toán & tiến độ triển khai CRM đợt 2.', rating: 5 }
         ];
 
-        let db = {
-            okrs: JSON.parse(localStorage.getItem('b2b_okrs')) || defaultOKRs,
-            revenue: JSON.parse(localStorage.getItem('b2b_revenue')) || defaultRevenue,
-            customers: JSON.parse(localStorage.getItem('b2b_customers')) || defaultCustomers,
-            tasks: JSON.parse(localStorage.getItem('b2b_tasks')) || defaultTasks
+        const DEFAULT_TASKS = [
+            { id: 'task-1', title: 'Hoàn thiện thiết kế UI/UX Dashboard bán hàng', deadline: '2026-05-15', priority: 'Cao', status: 'Đã xong', linkedOkrId: 'okr-1' },
+            { id: 'task-2', title: 'Phát triển module API kết nối cổng thanh toán', deadline: '2026-05-22', priority: 'Cao', status: 'Đang làm', linkedOkrId: 'okr-1' },
+            { id: 'task-3', title: 'Viết bài blog chia sẻ kinh nghiệm thiết kế Responsive', deadline: '2026-05-30', priority: 'Trung bình', status: 'Chưa làm', linkedOkrId: 'okr-2' },
+            { id: 'task-4', title: 'Nghiệm thu dự án Landing Page & gửi hóa đơn', deadline: '2026-05-29', priority: 'Thấp', status: 'Đã xong', linkedOkrId: 'okr-1' },
+            { id: 'task-5', title: 'Hoàn thành khóa học Advanced Micro-interactions', deadline: '2026-05-25', priority: 'Cao', status: 'Đã xong', linkedOkrId: 'okr-2' }
+        ];
+
+        // Quản lý state toàn cục của ứng dụng
+        const state = {
+            activeTab: 'dashboard',
+            startDate: '2026-05-01',
+            endDate: '2026-05-31',
+            searchTerm: '',
+            editingItem: null,
+            okrs: loadData('okr_data', DEFAULT_OKRS),
+            sales: loadData('sales_data', DEFAULT_SALES),
+            customers: loadData('customers_data', DEFAULT_CUSTOMERS),
+            cskh: loadData('cskh_data', DEFAULT_CSKH),
+            tasks: loadData('tasks_data', DEFAULT_TASKS)
         };
 
-        function saveDB() {
-            localStorage.setItem('b2b_okrs', JSON.stringify(db.okrs));
-            localStorage.setItem('b2b_revenue', JSON.stringify(db.revenue));
-            localStorage.setItem('b2b_customers', JSON.stringify(db.customers));
-            localStorage.setItem('b2b_tasks', JSON.stringify(db.tasks));
-            renderAll();
-        }
-
-        function clearAllData() {
-            if(confirm("Xác nhận tải lại toàn bộ cấu trúc dữ liệu mặc định của hệ thống?")) {
-                localStorage.clear();
-                db.okrs = [...defaultOKRs];
-                db.revenue = [...defaultRevenue];
-                db.customers = [...defaultCustomers];
-                db.tasks = [...defaultTasks];
-                saveDB();
+        // Hàm tiện ích: Đọc/Ghi LocalStorage an toàn
+        function loadData(key, fallback) {
+            try {
+                const saved = localStorage.getItem(key);
+                return saved ? JSON.parse(saved) : fallback;
+            } catch (e) {
+                console.error(`Lỗi đọc dữ liệu từ LocalStorage: ${key}`, e);
+                return fallback;
             }
         }
 
-        function switchTab(tabId) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
-            
-            const navButtons = ['dashboard', 'okrs', 'revenue', 'customers', 'tasks'];
-            navButtons.forEach(btn => {
-                const el = document.getElementById(`btn-${btn}`);
-                if(btn === tabId) {
-                    el.classList.add('sidebar-btn-active');
-                } else {
-                    el.classList.remove('sidebar-btn-active');
-                }
+        function saveData(key, data) {
+            try {
+                localStorage.setItem(key, JSON.stringify(data));
+            } catch (e) {
+                console.error(`Lỗi lưu dữ liệu vào LocalStorage: ${key}`, e);
+            }
+        }
+
+        // Đồng bộ dữ liệu lên LocalStorage bất cứ khi nào cập nhật state
+        function syncStateToStorage() {
+            saveData('okr_data', state.okrs);
+            saveData('sales_data', state.sales);
+            saveData('customers_data', state.customers);
+            saveData('cskh_data', state.cskh);
+            saveData('tasks_data', state.tasks);
+        }
+
+        // Định dạng tiền tệ VND
+        function formatVND(val) {
+            return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(val);
+        }
+
+        // Thông báo Toast tùy biến
+        function triggerToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const box = document.getElementById('toast-box');
+            const icon = document.getElementById('toast-icon');
+            const msgEl = document.getElementById('toast-message');
+
+            msgEl.textContent = message;
+
+            if (type === 'error') {
+                box.className = "flex items-center p-4 rounded-xl shadow-lg text-white bg-rose-600";
+                icon.textContent = "⚡";
+            } else if (type === 'info') {
+                box.className = "flex items-center p-4 rounded-xl shadow-lg text-white bg-sky-600";
+                icon.textContent = "ℹ️";
+            } else {
+                box.className = "flex items-center p-4 rounded-xl shadow-lg text-white bg-emerald-600";
+                icon.textContent = "✓";
+            }
+
+            container.classList.remove('hidden');
+            setTimeout(() => {
+                container.classList.add('hidden');
+            }, 3000);
+        }
+
+        // Custom Confirm dialog
+        let confirmActionCallback = null;
+        function customConfirm(message, callback) {
+            document.getElementById('confirm-text').textContent = message;
+            document.getElementById('confirm-modal').classList.remove('hidden');
+            confirmActionCallback = callback;
+        }
+
+        document.getElementById('confirm-cancel-btn').addEventListener('click', () => {
+            document.getElementById('confirm-modal').classList.add('hidden');
+            confirmActionCallback = null;
+        });
+
+        document.getElementById('confirm-ok-btn').addEventListener('click', () => {
+            if (confirmActionCallback) confirmActionCallback();
+            document.getElementById('confirm-modal').classList.add('hidden');
+            confirmActionCallback = null;
+        });
+
+        // ----------------- CORE LOGIC: AUTO-LINKING DATA -----------------
+        function calculateAutoLinks() {
+            const totalRevenuePaid = state.sales
+                .filter(s => s.status === 'Đã thanh toán')
+                .reduce((sum, item) => sum + item.amount, 0);
+
+            const vipCustomerCount = state.customers
+                .filter(c => c.segment === 'VIP').length;
+
+            const avgRating = state.cskh.length > 0 
+                ? parseFloat((state.cskh.reduce((sum, item) => sum + item.rating, 0) / state.cskh.length).toFixed(1)) 
+                : 0;
+
+            const completedHighTasks = state.tasks
+                .filter(t => t.priority === 'Cao' && t.status === 'Đã xong').length;
+
+            state.okrs = state.okrs.map(okr => {
+                const updatedKrs = okr.keyResults.map(kr => {
+                    let nextVal = kr.current;
+                    if (kr.autoLink === 'sales') {
+                        nextVal = totalRevenuePaid;
+                    } else if (kr.autoLink === 'customers-vip') {
+                        nextVal = vipCustomerCount;
+                    } else if (kr.autoLink === 'cskh-rating') {
+                        nextVal = avgRating;
+                    } else if (kr.autoLink === 'tasks-high') {
+                        nextVal = completedHighTasks;
+                    }
+                    return { ...kr, current: nextVal };
+                });
+                return { ...okr, keyResults: updatedKrs };
             });
 
-            const titles = { dashboard: "Dashboard Tổng Hợp", okrs: "Quản Lý OKRs Hệ Thống", revenue: "Danh Sách Hợp Đồng Doanh Thu", customers: "Danh Mục Đối Tác Khách Hàng", tasks: "Hành Động & Thúc Đẩy Task" };
-            document.getElementById('page-title').innerText = titles[tabId];
+            syncStateToStorage();
         }
 
-        function openModal(id) {
-            document.getElementById(id).classList.remove('hidden');
-            if(id === 'task-modal') {
-                const select = document.getElementById('task-okr-link');
-                select.innerHTML = `<option value="Không liên kết">Nhiệm vụ chung (General Task)</option>` + 
-                    db.okrs.filter(o => o.type === 'KR').map(o => `<option value="${o.title}">${o.title}</option>`).join('');
-            }
-        }
-        function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
-        function toggleOkrFields() {
-            const type = document.getElementById('okr-type').value;
-            document.getElementById('kr-fields').classList.toggle('hidden', type === 'Objective');
-        }
+        // Tính toán các metric dựa trên khoảng ngày lọc hoạt động của Dashboard
+        function getFilteredMetrics() {
+            const filteredSales = state.sales.filter(s => s.date >= state.startDate && s.date <= state.endDate);
+            const filteredCskh = state.cskh.filter(c => c.date >= state.startDate && c.date <= state.endDate);
+            const filteredTasks = state.tasks.filter(t => t.deadline >= state.startDate && t.deadline <= state.endDate);
 
-        function handleFormSubmit(event, modelType) {
-            event.preventDefault();
-            const id = "idx_" + Date.now();
+            const totalSalesRevenue = filteredSales.reduce((sum, s) => sum + s.amount, 0);
+            const paidSalesRevenue = filteredSales.filter(s => s.status === 'Đã thanh toán').reduce((sum, s) => sum + s.amount, 0);
+            const orderCount = filteredSales.length;
 
-            if(modelType === 'okr') {
-                const type = document.getElementById('okr-type').value;
-                db.okrs.push({
-                    id, type,
-                    title: document.getElementById('okr-title').value,
-                    quarter: document.getElementById('okr-quarter').value,
-                    current: type === 'KR' ? Number(document.getElementById('okr-current').value) : 0,
-                    target: type === 'KR' ? Number(document.getElementById('okr-target').value) : 0,
-                    unit: type === 'KR' ? document.getElementById('okr-unit').value : ''
+            const uniqueCustInSales = new Set(filteredSales.map(s => s.customerName));
+            const activeClientsCount = uniqueCustInSales.size;
+
+            const cskhCount = filteredCskh.length;
+            const avgCskhRating = filteredCskh.length > 0
+                ? (filteredCskh.reduce((sum, c) => sum + c.rating, 0) / filteredCskh.length).toFixed(1)
+                : 'N/A';
+
+            const completedTasks = filteredTasks.filter(t => t.status === 'Đã xong').length;
+            const totalTasksInRange = filteredTasks.length;
+            const taskCompletionRate = totalTasksInRange > 0 
+                ? Math.round((completedTasks / totalTasksInRange) * 100) 
+                : 0;
+
+            // Tính toán tiến độ OKR trung bình
+            let totalOkrProgress = 0;
+            state.okrs.forEach(okr => {
+                let krSum = 0;
+                okr.keyResults.forEach(kr => {
+                    const pct = Math.min(100, Math.round((kr.current / kr.target) * 100));
+                    krSum += pct;
                 });
-                closeModal('okr-modal');
-                document.getElementById('okr-form').reset();
-            }
-            else if(modelType === 'revenue') {
-                db.revenue.push({
-                    id,
-                    name: document.getElementById('rev-name').value,
-                    value: Number(document.getElementById('rev-value').value),
-                    stage: document.getElementById('rev-stage').value,
-                    quarter: document.getElementById('rev-quarter').value
-                });
-                closeModal('revenue-modal');
-                document.getElementById('revenue-form').reset();
-            }
-            else if(modelType === 'customer') {
-                db.customers.push({
-                    id,
-                    company: document.getElementById('cust-company').value,
-                    type: document.getElementById('cust-type').value,
-                    contact: document.getElementById('cust-contact').value
-                });
-                closeModal('customer-modal');
-                document.getElementById('customer-form').reset();
-            }
-            else if(modelType === 'task') {
-                db.tasks.push({
-                    id,
-                    title: document.getElementById('task-title').value,
-                    okrLink: document.getElementById('task-okr-link').value,
-                    deadline: document.getElementById('task-deadline').value,
-                    status: "Chưa xong"
-                });
-                closeModal('task-modal');
-                document.getElementById('task-form').reset();
-            }
-            saveDB();
+                const okrPct = okr.keyResults.length > 0 ? Math.round(krSum / okr.keyResults.length) : 0;
+                totalOkrProgress += okrPct;
+            });
+            const avgOkrProgress = state.okrs.length > 0 ? Math.round(totalOkrProgress / state.okrs.length) : 0;
+
+            return {
+                totalSalesRevenue,
+                paidSalesRevenue,
+                orderCount,
+                activeClientsCount,
+                cskhCount,
+                avgCskhRating,
+                taskCompletionRate,
+                totalTasksInRange,
+                completedTasks,
+                avgOkrProgress,
+                filteredSales,
+                filteredCskh,
+                filteredTasks
+            };
         }
 
-        function deleteItem(modelType, id) {
-            if(confirm("Xác nhận xóa bỏ vĩnh viễn bản ghi dữ liệu này?")) {
-                db[modelType] = db[modelType].filter(item => item.id !== id);
-                saveDB();
-            }
+        // Cập nhật Header Metrics
+        function renderHeaderMetrics() {
+            const metrics = getFilteredMetrics();
+            document.getElementById('header-okr-progress').textContent = `${metrics.avgOkrProgress}%`;
+            document.getElementById('header-revenue').textContent = formatVND(metrics.paidSalesRevenue);
+            document.getElementById('header-rating').textContent = `⭐ ${metrics.avgCskhRating}`;
         }
 
-        function toggleTaskStatus(id) {
-            const task = db.tasks.find(t => t.id === id);
-            if(task) {
-                task.status = task.status === "Đã xong" ? "Chưa xong" : "Đã xong";
-                saveDB();
-            }
-        }
+        // ----------------- TAB RENDERING INTERFACE -----------------
+        const OKR_APP = {
+            changeTab: function(tabId) {
+                state.activeTab = tabId;
+                state.searchTerm = ''; // reset search
+                
+                // Active CSS class cho tab
+                const buttons = document.querySelectorAll('#nav-tabs button');
+                buttons.forEach(btn => {
+                    if (btn.getAttribute('data-tab') === tabId) {
+                        btn.className = "flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors shrink-0 bg-indigo-100 text-indigo-700";
+                    } else {
+                        btn.className = "flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium transition-colors shrink-0 text-slate-600 hover:text-slate-900 hover:bg-slate-100";
+                    }
+                });
 
-        function applyGlobalFilter() { renderAll(); }
+                this.render();
+            },
 
-        function renderAll() {
-            const filterQuarter = document.getElementById('global-filter-quarter').value;
+            render: function() {
+                calculateAutoLinks();
+                renderHeaderMetrics();
+                
+                const container = document.getElementById('tab-content');
+                container.innerHTML = ''; // dọn sạch
 
-            const filteredOKRs = filterQuarter === 'all' ? db.okrs : db.okrs.filter(o => o.quarter === filterQuarter);
-            const filteredRevenue = filterQuarter === 'all' ? db.revenue : db.revenue.filter(r => r.quarter === filterQuarter);
-
-            // Tính toán Widgets
-            const totalRevenue = filteredRevenue.filter(r => r.stage.includes("Đã Thu")).reduce((sum, r) => sum + r.value, 0);
-            document.getElementById('widget-revenue').innerText = `${totalRevenue.toLocaleString()}đ`;
-            document.getElementById('widget-customers').innerText = db.customers.length;
-
-            const krs = filteredOKRs.filter(o => o.type === 'KR');
-            const avgProgress = krs.length > 0 ? Math.min(100, Math.round((krs.reduce((sum, item) => sum + (item.current / item.target), 0) / krs.length) * 100)) : 0;
-            document.getElementById('widget-okr-progress').innerText = `${avgProgress}%`;
-
-            const doneTasks = db.tasks.filter(t => t.status === "Đã xong").length;
-            const taskPct = db.tasks.length > 0 ? Math.round((doneTasks / db.tasks.length) * 100) : 0;
-            document.getElementById('widget-tasks').innerText = `${taskPct}%`;
-
-            // Render Dashboard OKR list
-            document.getElementById('dashboard-okr-list').innerHTML = filteredOKRs.map(o => {
-                if(o.type === 'Objective') {
-                    return `<div class="font-bold text-slate-900 border-l-4 border-indigo-600 pl-3 py-0.5 bg-slate-50 text-sm">${o.quarter} - ${o.title}</div>`;
-                } else {
-                    const pct = Math.min(100, Math.round((o.current / o.target) * 100));
-                    return `
-                        <div class="ml-4 space-y-1">
-                            <div class="flex justify-between text-xs font-semibold text-slate-600">
-                                <span>🎯 KR: ${o.title}</span>
-                                <span class="font-bold text-indigo-600">${pct}% (${o.current.toLocaleString()}/${o.target.toLocaleString()} ${o.unit})</span>
-                            </div>
-                            <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden border border-slate-200">
-                                <div class="bg-indigo-600 h-full rounded-full" style="width: ${pct}%"></div>
-                            </div>
-                        </div>`;
+                switch(state.activeTab) {
+                    case 'dashboard':
+                        this.renderDashboard(container);
+                        break;
+                    case 'okrs':
+                        this.renderOkrs(container);
+                        break;
+                    case 'sales':
+                        this.renderSales(container);
+                        break;
+                    case 'customers':
+                        this.renderCustomers(container);
+                        break;
+                    case 'cskh':
+                        this.renderCskh(container);
+                        break;
+                    case 'tasks':
+                        this.renderTasks(container);
+                        break;
                 }
-            }).join('');
+            },
 
-            // Render Dashboard Revenue Status
-            const stages = ["Đã Thu Tiền / Hoàn Thành", "Đang Triển Khai / Chờ Thu", "Đang Thương Lượng Báo Giá"];
-            document.getElementById('dashboard-revenue-summary').innerHTML = stages.map(stg => {
-                const matches = filteredRevenue.filter(r => r.stage === stg);
-                const sum = matches.reduce((s, r) => s + r.value, 0);
-                return `
-                    <div class="flex justify-between items-center bg-slate-50 p-3 rounded-xl border border-slate-200/60">
-                        <span class="text-xs font-semibold text-slate-600">${stg} (${matches.length} đơn)</span>
-                        <span class="text-xs font-bold text-slate-900">${sum.toLocaleString()}đ</span>
-                    </div>`;
-            }).join('');
+            // 1. DASHBOARD TAB
+            renderDashboard: function(container) {
+                const metrics = getFilteredMetrics();
 
-            // Render Bảng biểu OKR Tab
-            document.getElementById('okr-table-body').innerHTML = filteredOKRs.map(o => {
-                const isKR = o.type === 'KR';
-                const pct = isKR ? Math.min(100, Math.round((o.current / o.target) * 100)) : 100;
-                return `
-                    <tr class="hover:bg-slate-50/80 transition">
-                        <td class="p-4 font-bold text-slate-500">${o.quarter}</td>
-                        <td class="p-4">
-                            <span class="inline-block text-[10px] font-black px-1.5 py-0.5 rounded-md mr-2 ${isKR ? 'bg-amber-100 text-amber-800' : 'bg-indigo-100 text-indigo-800'}">${o.type}</span>
-                            <span class="${!isKR ? 'font-bold text-slate-900' : 'text-slate-700 font-medium'}">${o.title}</span>
+                let okrsListHtml = state.okrs.map(okr => {
+                    const okrProgressPct = okr.keyResults.length > 0 
+                        ? Math.round(okr.keyResults.reduce((sum, kr) => sum + Math.min(100, Math.round((kr.current / kr.target) * 100)), 0) / okr.keyResults.length)
+                        : 0;
+                    
+                    let krsTinyHtml = okr.keyResults.map(kr => {
+                        const krPct = Math.min(100, Math.round((kr.current / kr.target) * 100));
+                        return `
+                            <div class="bg-white p-2 rounded border border-slate-100 shadow-2xs">
+                                <span class="block text-slate-500 font-medium truncate text-[11px]" title="${kr.text}">${kr.text}</span>
+                                <div class="flex justify-between items-center mt-1">
+                                    <span class="text-slate-900 font-semibold text-[11px]">${kr.current.toLocaleString()}/${kr.target.toLocaleString()}${kr.unit}</span>
+                                    <span class="font-bold text-[11px] ${krPct >= 80 ? 'text-emerald-600' : krPct >= 50 ? 'text-indigo-600' : 'text-slate-500'}">${krPct}%</span>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+
+                    return `
+                        <div class="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                            <div class="flex justify-between items-start mb-2">
+                                <h4 class="font-semibold text-slate-800 text-sm">${okr.objective}</h4>
+                                <span class="px-2 py-1 rounded bg-indigo-100 text-indigo-700 font-bold text-xs">${okrProgressPct}% Đạt</span>
+                            </div>
+                            <div class="w-full bg-slate-200 h-2 rounded-full mb-4">
+                                <div class="bg-gradient-to-r from-indigo-500 to-emerald-500 h-2 rounded-full" style="width: ${okrProgressPct}%"></div>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+                                ${krsTinyHtml}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                let recentCskhHtml = metrics.filteredCskh.length === 0 
+                    ? `<div class="text-center py-8 text-slate-400 text-xs">Không có tương tác CSKH nào trong kỳ lọc.</div>`
+                    : metrics.filteredCskh.slice(0, 4).map(c => `
+                        <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 flex gap-3">
+                            <div class="text-xl mt-1">
+                                ${c.channel === 'Gặp trực tiếp' ? '🧑‍🤝‍🧑' : c.channel === 'Gọi điện thoại' ? '📞' : '📧'}
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-xs font-bold text-slate-800 truncate">${c.customerName}</span>
+                                    <span class="text-[10px] text-slate-400">${c.date}</span>
+                                </div>
+                                <p class="text-xs text-slate-600 mt-1 line-clamp-2">${c.content}</p>
+                                <div class="flex justify-between items-center mt-2">
+                                    <span class="text-[10px] bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded-full font-medium">${c.channel}</span>
+                                    <span class="text-xs text-yellow-500 font-semibold">⭐ ${c.rating}/5</span>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+
+                let recentSalesHtml = metrics.filteredSales.length === 0
+                    ? `<div class="text-center py-8 text-slate-400 text-xs">Không có giao dịch nào trong kỳ lọc.</div>`
+                    : metrics.filteredSales.slice(0, 5).map(s => `
+                        <div class="flex justify-between items-center p-3 bg-slate-50 rounded-xl border border-slate-100">
+                            <div class="min-w-0 flex-1 pr-3">
+                                <p class="font-semibold text-xs text-slate-900 truncate">${s.product}</p>
+                                <p class="text-[11px] text-slate-500">KH: ${s.customerName} | ${s.date}</p>
+                            </div>
+                            <div class="text-right shrink-0">
+                                <p class="font-bold text-xs text-slate-900">${formatVND(s.amount)}</p>
+                                <span class="text-[9px] px-2 py-0.5 rounded-full font-semibold ${s.status === 'Đã thanh toán' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">
+                                    ${s.status}
+                                </span>
+                            </div>
+                        </div>
+                    `).join('');
+
+                let recentTasksHtml = metrics.filteredTasks.length === 0
+                    ? `<div class="text-center py-8 text-slate-400 text-xs">Không có công việc nào trong kỳ lọc.</div>`
+                    : metrics.filteredTasks.slice(0, 5).map(t => `
+                        <div class="flex justify-between items-center p-3 bg-slate-50 rounded-xl border border-slate-100">
+                            <div class="min-w-0 flex-1 pr-2">
+                                <p class="font-semibold text-xs text-slate-900 truncate">${t.title}</p>
+                                <p class="text-[11px] text-slate-500">Hạn: ${t.deadline}</p>
+                            </div>
+                            <div class="flex items-center gap-2 shrink-0">
+                                <span class="text-[9px] px-2 py-0.5 rounded-full font-semibold ${t.priority === 'Cao' ? 'bg-rose-100 text-rose-800' : t.priority === 'Trung bình' ? 'bg-amber-100 text-amber-800' : 'bg-slate-200 text-slate-800'}">
+                                    ${t.priority}
+                                </span>
+                                <span class="text-[10px] px-2 py-0.5 rounded-full font-bold ${t.status === 'Đã xong' ? 'bg-emerald-100 text-emerald-800' : t.status === 'Đang làm' ? 'bg-indigo-100 text-indigo-800' : 'bg-slate-100 text-slate-500'}">
+                                    ${t.status}
+                                </span>
+                            </div>
+                        </div>
+                    `).join('');
+
+                container.innerHTML = `
+                    <!-- Bộ lọc thời gian -->
+                    <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <div>
+                            <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                                <span>📅 Bộ lọc dữ liệu Dashboard</span>
+                            </h2>
+                            <p class="text-xs text-slate-500">Doanh thu, Khách hàng hoạt động, CSKH, Task sẽ tính toán tự động trong khoảng này.</p>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                            <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-lg border border-slate-200 w-full sm:w-auto">
+                                <span class="text-xs text-slate-500 px-2 font-medium">Từ ngày</span>
+                                <input type="date" id="dash-start-date" value="${state.startDate}" onchange="OKR_APP.updateDates()" class="bg-white border-0 text-xs rounded p-1.5 focus:ring-1 focus:ring-indigo-500 font-semibold" />
+                            </div>
+                            <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-lg border border-slate-200 w-full sm:w-auto">
+                                <span class="text-xs text-slate-500 px-2 font-medium">Đến ngày</span>
+                                <input type="date" id="dash-end-date" value="${state.endDate}" onchange="OKR_APP.updateDates()" class="bg-white border-0 text-xs rounded p-1.5 focus:ring-1 focus:ring-indigo-500 font-semibold" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Grid chỉ số -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
+                            <div class="absolute top-0 left-0 w-2 h-full bg-emerald-500"></div>
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="text-sm font-medium text-slate-500 uppercase tracking-wider">Doanh thu kỳ lọc</p>
+                                    <p class="text-2xl font-bold text-slate-900 mt-2">${formatVND(metrics.totalSalesRevenue)}</p>
+                                    <p class="text-xs text-slate-400 mt-1">Đã thu: ${formatVND(metrics.paidSalesRevenue)}</p>
+                                </div>
+                                <span class="text-3xl bg-emerald-100 text-emerald-600 p-2.5 rounded-xl">💰</span>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
+                            <div class="absolute top-0 left-0 w-2 h-full bg-indigo-500"></div>
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="text-sm font-medium text-slate-500 uppercase tracking-wider">Tiến độ OKR chung</p>
+                                    <p class="text-2xl font-bold text-slate-900 mt-2">${metrics.avgOkrProgress}%</p>
+                                    <p class="text-xs text-slate-400 mt-1">Tính theo ${state.okrs.length} mục tiêu lớn</p>
+                                </div>
+                                <span class="text-3xl bg-indigo-100 text-indigo-600 p-2.5 rounded-xl">🎯</span>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
+                            <div class="absolute top-0 left-0 w-2 h-full bg-yellow-500"></div>
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="text-sm font-medium text-slate-500 uppercase tracking-wider">Hài lòng CSKH</p>
+                                    <p class="text-2xl font-bold text-slate-900 mt-2">⭐ ${metrics.avgCskhRating}</p>
+                                    <p class="text-xs text-slate-400 mt-1">${metrics.cskhCount} cuộc chăm sóc</p>
+                                </div>
+                                <span class="text-3xl bg-yellow-100 text-yellow-600 p-2.5 rounded-xl">🤝</span>
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
+                            <div class="absolute top-0 left-0 w-2 h-full bg-pink-500"></div>
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <p class="text-sm font-medium text-slate-500 uppercase tracking-wider">Hoàn thành việc</p>
+                                    <p class="text-2xl font-bold text-slate-900 mt-2">${metrics.taskCompletionRate}%</p>
+                                    <p class="text-xs text-slate-400 mt-1">${metrics.completedTasks}/${metrics.totalTasksInRange} Tasks xong</p>
+                                </div>
+                                <span class="text-3xl bg-pink-100 text-pink-600 p-2.5 rounded-xl">📋</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Biểu đồ / Tiến trình chi tiết -->
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm lg:col-span-2">
+                            <h3 class="text-lg font-bold text-slate-800 mb-4 flex justify-between items-center">
+                                <span>🎯 Tiến độ Mục tiêu Hiện hành (OKRs)</span>
+                                <button onclick="OKR_APP.changeTab('okrs')" class="text-xs text-indigo-600 hover:underline">Chi tiết OKRs →</button>
+                            </h3>
+                            <div class="space-y-6">
+                                ${okrsListHtml}
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                            <h3 class="text-lg font-bold text-slate-800 mb-4 flex justify-between items-center">
+                                <span>💬 Hoạt động CSKH (Kỳ lọc)</span>
+                                <button onclick="OKR_APP.changeTab('cskh')" class="text-xs text-indigo-600 hover:underline">Nhật ký →</button>
+                            </h3>
+                            <div class="space-y-4">
+                                ${recentCskhHtml}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Giao dịch / Công việc -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                            <h3 class="text-lg font-bold text-slate-800 mb-4 flex justify-between items-center">
+                                <span>💰 Doanh số phát sinh (Kỳ lọc)</span>
+                                <button onclick="OKR_APP.changeTab('sales')" class="text-xs text-indigo-600 hover:underline">Doanh số →</button>
+                            </h3>
+                            <div class="space-y-3">
+                                ${recentSalesHtml}
+                            </div>
+                        </div>
+
+                        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                            <h3 class="text-lg font-bold text-slate-800 mb-4 flex justify-between items-center">
+                                <span>📋 Tasks hoạt động (Kỳ lọc)</span>
+                                <button onclick="OKR_APP.changeTab('tasks')" class="text-xs text-indigo-600 hover:underline">Tác vụ →</button>
+                            </h3>
+                            <div class="space-y-3">
+                                ${recentTasksHtml}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            },
+
+            updateDates: function() {
+                state.startDate = document.getElementById('dash-start-date').value;
+                state.endDate = document.getElementById('dash-end-date').value;
+                this.render();
+            },
+
+            // 2. OKRs TAB
+            renderOkrs: function(container) {
+                let listHtml = state.okrs.map(okr => {
+                    const totalProgress = okr.keyResults.length > 0 
+                        ? Math.round(okr.keyResults.reduce((sum, kr) => sum + Math.min(100, Math.round((kr.current / kr.target) * 100)), 0) / okr.keyResults.length)
+                        : 0;
+
+                    let krsHtml = okr.keyResults.map(kr => {
+                        const krProgress = Math.min(100, Math.round((kr.current / kr.target) * 100));
+                        let autoLinkBadge = '';
+                        if (kr.autoLink !== 'manual') {
+                            let label = kr.autoLink === 'sales' ? 'Doanh thu bán hàng' : kr.autoLink === 'customers-vip' ? 'Khách hàng VIP' : kr.autoLink === 'cskh-rating' ? 'Đánh giá CSKH' : 'Tasks ưu tiên cao';
+                            autoLinkBadge = `
+                                <span class="inline-flex items-center text-[10px] bg-sky-50 text-sky-700 border border-sky-100 px-2 py-0.5 rounded-full font-semibold">
+                                    🔗 Tự động cập nhật: ${label}
+                                </span>
+                            `;
+                        }
+
+                        let sliderHtml = '';
+                        if (kr.autoLink === 'manual') {
+                            sliderHtml = `
+                                <div class="flex items-center gap-4 mt-2 bg-white p-2 border border-slate-100 rounded-lg">
+                                    <label class="text-[11px] font-medium text-slate-500 shrink-0">Cập nhật thủ công:</label>
+                                    <input type="range" min="0" max="${kr.target}" value="${kr.current}" oninput="OKR_APP.updateManualKr('${okr.id}', '${kr.id}', this.value)" class="w-full h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600" />
+                                    <span class="text-xs font-bold text-slate-700 w-12 text-center">${kr.current}</span>
+                                </div>
+                            `;
+                        }
+
+                        return `
+                            <div class="p-4 bg-slate-50 border border-slate-100 rounded-xl space-y-2">
+                                <div class="flex flex-col md:flex-row md:items-center justify-between gap-2">
+                                    <div class="space-y-1">
+                                        <span class="font-semibold text-slate-800 text-sm">${kr.text}</span>
+                                        ${autoLinkBadge}
+                                    </div>
+                                    <div class="flex items-center gap-4 justify-between md:justify-end">
+                                        <div class="text-right">
+                                            <span class="text-xs text-slate-500">Đạt được:</span>
+                                            <span class="font-bold text-slate-900 text-sm">${kr.current.toLocaleString()}/${kr.target.toLocaleString()}${kr.unit}</span>
+                                        </div>
+                                        <div class="w-16 text-right font-black text-sm ${krProgress >= 80 ? 'text-emerald-600' : krProgress >= 50 ? 'text-indigo-600' : 'text-slate-500'}">
+                                            ${krProgress}%
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="w-full bg-slate-200 h-2 rounded-full relative overflow-hidden">
+                                    <div class="h-full rounded-full transition-all duration-300 ${krProgress >= 85 ? 'bg-gradient-to-r from-emerald-400 to-emerald-600' : krProgress >= 50 ? 'bg-gradient-to-r from-indigo-400 to-indigo-600' : 'bg-gradient-to-r from-amber-400 to-amber-500'}" style="width: ${krProgress}%"></div>
+                                </div>
+                                ${sliderHtml}
+                            </div>
+                        `;
+                    }).join('');
+
+                    return `
+                        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                            <div class="bg-slate-900 text-white p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                                <div>
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <span class="text-xs bg-indigo-500 text-white px-2 py-0.5 rounded font-semibold uppercase tracking-wider">Mục tiêu quý</span>
+                                        <span class="text-xs text-slate-400">(${okr.startDate} đến ${okr.endDate})</span>
+                                    </div>
+                                    <h3 class="text-lg font-bold">${okr.objective}</h3>
+                                </div>
+                                <div class="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end">
+                                    <div class="text-right">
+                                        <span class="block text-xs text-slate-400">Tiến độ chung</span>
+                                        <span class="text-2xl font-black text-emerald-400">${totalProgress}%</span>
+                                    </div>
+                                    <div class="flex gap-1.5">
+                                        <button onclick="OKR_APP.openOkrModal('${okr.id}')" class="p-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-slate-300 transition-colors">✏️</button>
+                                        <button onclick="OKR_APP.deleteItem('okr', '${okr.id}')" class="p-2 bg-slate-800 hover:bg-rose-950 rounded-lg text-rose-400 hover:text-rose-300 transition-colors">🗑️</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="p-6">
+                                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Kết quả then chốt (Key Results)</h4>
+                                <div class="space-y-4">
+                                    ${krsHtml}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                container.innerHTML = `
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                        <div>
+                            <h2 class="text-xl font-bold text-slate-900">Mục tiêu & Kết quả then chốt (OKRs)</h2>
+                            <p class="text-sm text-slate-500">Mục tiêu bám sát các hành động thực tế từ CRM và Tasks.</p>
+                        </div>
+                        <button onclick="OKR_APP.openOkrModal()" class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl shadow-xs transition-colors">+ Tạo OKR Mới</button>
+                    </div>
+                    <div class="space-y-6">
+                        ${listHtml}
+                    </div>
+                `;
+            },
+
+            updateManualKr: function(okrId, krId, value) {
+                const val = parseFloat(value) || 0;
+                state.okrs = state.okrs.map(okr => {
+                    if (okr.id === okrId) {
+                        return {
+                            ...okr,
+                            keyResults: okr.keyResults.map(kr => kr.id === krId ? { ...kr, current: val } : kr)
+                        };
+                    }
+                    return okr;
+                });
+                syncStateToStorage();
+                renderHeaderMetrics();
+                // Chỉ render lại tiến trình cho mượt, không làm cuộn trang
+                const metrics = getFilteredMetrics();
+                document.getElementById('header-okr-progress').textContent = `${metrics.avgOkrProgress}%`;
+            },
+
+            // 3. SALES TAB
+            renderSales: function(container) {
+                const paidSalesTotal = state.sales.filter(s => s.status === 'Đã thanh toán').reduce((sum, s) => sum + s.amount, 0);
+                const pendingSalesTotal = state.sales.filter(s => s.status === 'Chờ thanh toán').reduce((sum, s) => sum + s.amount, 0);
+                const allSalesTotal = state.sales.reduce((sum, s) => sum + s.amount, 0);
+
+                let filteredList = state.sales.filter(s => 
+                    s.customerName.toLowerCase().includes(state.searchTerm.toLowerCase()) || 
+                    s.product.toLowerCase().includes(state.searchTerm.toLowerCase())
+                );
+
+                let rowsHtml = filteredList.map(sale => `
+                    <tr class="hover:bg-slate-50">
+                        <td class="px-6 py-4 font-semibold text-slate-950">${sale.product}</td>
+                        <td class="px-6 py-4">${sale.customerName}</td>
+                        <td class="px-6 py-4">${sale.date}</td>
+                        <td class="px-6 py-4 text-right font-bold text-slate-900">${formatVND(sale.amount)}</td>
+                        <td class="px-6 py-4 text-center">
+                            <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold ${sale.status === 'Đã thanh toán' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">
+                                ${sale.status}
+                            </span>
                         </td>
-                        <td class="p-4 text-slate-600 font-mono font-semibold">${isKR ? `${o.current.toLocaleString()} / ${o.target.toLocaleString()} ${o.unit}` : '-'}</td>
-                        <td class="p-4">
-                            ${isKR ? `<div class="flex items-center gap-2">
-                                <div class="w-full bg-slate-200 h-2 rounded-full overflow-hidden"><div class="bg-indigo-600 h-full" style="width: ${pct}%"></div></div>
-                                <span class="text-xs font-bold">${pct}%</span>
-                            </div>` : '<span class="text-xs text-slate-400 font-medium">Mục tiêu gốc</span>'}
+                        <td class="px-6 py-4 text-center">
+                            <div class="flex justify-center gap-2">
+                                <button onclick="OKR_APP.openSaleModal('${sale.id}')" class="p-1 hover:bg-slate-100 rounded text-slate-500 hover:text-indigo-600 transition-colors">✏️</button>
+                                <button onclick="OKR_APP.deleteItem('sale', '${sale.id}')" class="p-1 hover:bg-slate-100 rounded text-slate-400 hover:text-rose-600 transition-colors">🗑️</button>
+                            </div>
                         </td>
-                        <td class="p-4 text-center">
-                            <button onclick="deleteItem('okrs', '${o.id}')" class="text-rose-500 hover:text-rose-700 transition"><i data-lucide="trash-2" class="w-4 h-4 inline"></i></button>
-                        </td>
-                    </tr>`;
-            }).join('');
+                    </tr>
+                `).join('');
 
-            // Render Bảng biểu Revenue Tab
-            document.getElementById('revenue-table-body').innerHTML = filteredRevenue.map(r => `
-                <tr class="hover:bg-slate-50/80 transition">
-                    <td class="p-4 font-bold text-slate-900">${r.name}</td>
-                    <td class="p-4 font-black text-emerald-600 font-mono">${r.value.toLocaleString()}đ</td>
-                    <td class="p-4">
-                        <span class="px-2.5 py-1 rounded-full text-xs font-bold ${r.stage.includes('Đã Thu') ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">${r.stage}</span>
-                    </td>
-                    <td class="p-4 font-bold text-slate-500">${r.quarter}</td>
-                    <td class="p-4 text-center">
-                        <button onclick="deleteItem('revenue', '${r.id}')" class="text-rose-500 hover:text-rose-700 transition"><i data-lucide="trash-2" class="w-4 h-4 inline"></i></button>
-                    </td>
-                </tr>`).join('');
+                container.innerHTML = `
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                        <div>
+                            <h2 class="text-xl font-bold text-slate-900">Doanh số & Giao dịch bán hàng</h2>
+                            <p class="text-sm text-slate-500">Doanh thu đạt chuẩn tự động đồng bộ sang OKRs tài chính.</p>
+                        </div>
+                        <button onclick="OKR_APP.openSaleModal()" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl shadow-xs transition-colors">+ Ghi Nhận Giao Dịch</button>
+                    </div>
 
-            // Render Bảng biểu Customer Tab
-            document.getElementById('customer-table-body').innerHTML = db.customers.map(c => `
-                <tr class="hover:bg-slate-50/80 transition">
-                    <td class="p-4 font-bold text-slate-900">${c.company}</td>
-                    <td class="p-4"><span class="bg-slate-100 text-slate-700 border border-slate-200 font-bold px-2.5 py-1 rounded-lg text-xs">${c.type}</span></td>
-                    <td class="p-4 font-mono text-xs text-indigo-600 underline font-semibold">${c.contact}</td>
-                    <td class="p-4 text-center">
-                        <button onclick="deleteItem('customers', '${c.id}')" class="text-rose-500 hover:text-rose-700 transition"><i data-lucide="trash-2" class="w-4 h-4 inline"></i></button>
-                    </td>
-                </tr>`).join('');
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="bg-emerald-50 p-4 rounded-xl border border-emerald-100">
+                            <span class="block text-xs text-emerald-800 font-medium uppercase">Doanh thu đạt (Đã thanh toán)</span>
+                            <span class="text-xl font-bold text-emerald-950 mt-1 block">${formatVND(paidSalesTotal)}</span>
+                        </div>
+                        <div class="bg-amber-50 p-4 rounded-xl border border-amber-100">
+                            <span class="block text-xs text-amber-800 font-medium uppercase">Chờ thanh toán</span>
+                            <span class="text-xl font-bold text-amber-950 mt-1 block">${formatVND(pendingSalesTotal)}</span>
+                        </div>
+                        <div class="bg-slate-100 p-4 rounded-xl border border-slate-200">
+                            <span class="block text-xs text-slate-700 font-medium uppercase">Tổng doanh số luỹ kế</span>
+                            <span class="text-xl font-bold text-slate-900 mt-1 block">${formatVND(allSalesTotal)}</span>
+                        </div>
+                    </div>
 
-            // Render Bảng biểu Tasks Tab
-            document.getElementById('task-table-body').innerHTML = db.tasks.map(t => `
-                <tr class="hover:bg-slate-50/80 transition ${t.status === 'Đã xong' ? 'opacity-60 bg-slate-50/40' : ''}">
-                    <td class="p-4 font-semibold text-slate-800 ${t.status === 'Đã xong' ? 'line-through text-slate-400' : ''}">${t.title}</td>
-                    <td class="p-4 text-xs font-semibold text-slate-500 max-w-xs truncate">🎯 ${t.okrLink}</td>
-                    <td class="p-4 text-xs font-bold text-slate-500 font-mono">${t.deadline}</td>
-                    <td class="p-4">
-                        <button onclick="toggleTaskStatus('${t.id}')" class="flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold border transition cursor-pointer
-                            ${t.status === 'Đã xong' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-rose-50 text-rose-700 border-rose-200'}">
-                            <i data-lucide="${t.status === 'Đã xong' ? 'check-square' : 'square'}" class="w-3.5 h-3.5"></i> ${t.status}
-                        </button>
-                    </td>
-                    <td class="p-4 text-center">
-                        <button onclick="deleteItem('tasks', '${t.id}')" class="text-rose-500 hover:text-rose-700 transition"><i data-lucide="trash-2" class="w-4 h-4 inline"></i></button>
-                    </td>
-                </tr>`).join('');
+                    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                        <div class="p-4 border-b border-slate-100 bg-slate-50 flex flex-col sm:flex-row items-center justify-between gap-4">
+                            <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Danh sách hóa đơn</span>
+                            <div class="relative w-full sm:w-auto">
+                                <input type="text" id="sales-search" placeholder="Tìm tên khách hàng, sản phẩm..." value="${state.searchTerm}" oninput="OKR_APP.searchData('sales', this.value)" class="pl-3 pr-8 py-1.5 border border-slate-200 rounded-lg text-xs focus:ring-1 focus:ring-indigo-500 w-full sm:w-60" />
+                            </div>
+                        </div>
 
-            if(window.lucide) { window.lucide.createIcons(); }
-        }
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm text-slate-600">
+                                <thead class="bg-slate-50 text-xs text-slate-500 uppercase font-semibold border-b border-slate-100">
+                                    <tr>
+                                        <th class="px-6 py-4">Sản phẩm / Dự án</th>
+                                        <th class="px-6 py-4">Khách hàng</th>
+                                        <th class="px-6 py-4">Ngày giao dịch</th>
+                                        <th class="px-6 py-4 text-right">Giá trị</th>
+                                        <th class="px-6 py-4 text-center">Trạng thái</th>
+                                        <th class="px-6 py-4 text-center">Hành động</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100">
+                                    ${rowsHtml ? rowsHtml : `<tr><td colspan="6" class="text-center py-8 text-slate-400">Không tìm thấy giao dịch tương thích.</td></tr>`}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `;
+            },
 
-        window.onload = function() { renderAll(); };
+            // 4. CUSTOMERS TAB
+            renderCustomers: function(container) {
+                let filteredList = state.customers.filter(c => 
+                    c.name.toLowerCase().includes(state.searchTerm.toLowerCase()) || 
+                    (c.email && c.email.toLowerCase().includes(state.searchTerm.toLowerCase())) || 
+                    c.phone.includes(state.searchTerm)
+                );
+
+                let cardsHtml = filteredList.map(c => `
+                    <div class="p-5 rounded-2xl border border-slate-100 bg-slate-50/50 hover:bg-slate-50 transition-colors flex flex-col justify-between shadow-2xs">
+                        <div>
+                            <div class="flex items-center justify-between mb-3">
+                                <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase ${c.segment === 'VIP' ? 'bg-red-100 text-red-800 border border-red-200' : c.segment === 'Mới' ? 'bg-teal-100 text-teal-800' : 'bg-slate-200 text-slate-700'}">
+                                    ${c.segment}
+                                </span>
+                                <div class="flex gap-1.5 text-xs">
+                                    <button onclick="OKR_APP.openCustomerModal('${c.id}')" class="text-indigo-600 hover:underline font-semibold">Sửa</button>
+                                    <span class="text-slate-300">|</span>
+                                    <button onclick="OKR_APP.deleteItem('customer', '${c.id}')" class="text-rose-600 hover:underline font-semibold">Xóa</button>
+                                </div>
+                            </div>
+                            <h3 class="font-bold text-slate-900 text-base">${c.name}</h3>
+                            <div class="mt-3 space-y-1.5 text-xs text-slate-600">
+                                <p class="flex items-center gap-2"><span>📞 SĐT:</span><span class="font-medium text-slate-800">${c.phone}</span></p>
+                                <p class="flex items-center gap-2"><span>📧 Email:</span><span class="font-medium text-slate-800">${c.email || 'Chưa có'}</span></p>
+                            </div>
+                        </div>
+                        <div class="mt-4 pt-3 border-t border-slate-200/50">
+                            <span class="block text-[10px] text-slate-400 uppercase font-semibold">Đặc trưng & Ghi chú</span>
+                            <p class="text-xs text-slate-600 italic mt-1">${c.notes || 'Không có ghi chú.'}</p>
+                        </div>
+                    </div>
+                `).join('');
+
+                container.innerHTML = `
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                        <div>
+                            <h2 class="text-xl font-bold text-slate-900">Quản lý Khách hàng (CRM)</h2>
+                            <p class="text-sm text-slate-500">Phân khúc khách hàng để cập nhật tự động OKRs VIP.</p>
+                        </div>
+                        <button onclick="OKR_APP.openCustomerModal()" class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl shadow-xs transition-colors">+ Thêm Khách Hàng</button>
+                    </div>
+
+                    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                        <div class="p-4 border-b border-slate-100 bg-slate-50 flex flex-col sm:flex-row items-center justify-between gap-4">
+                            <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Danh bạ khách hàng</span>
+                            <div class="relative w-full sm:w-auto">
+                                <input type="text" id="customers-search" placeholder="Tìm theo tên, sđt..." value="${state.searchTerm}" oninput="OKR_APP.searchData('customers', this.value)" class="pl-3 pr-8 py-1.5 border border-slate-200 rounded-lg text-xs focus:ring-1 focus:ring-indigo-500 w-full sm:w-60" />
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 p-4">
+                            ${cardsHtml ? cardsHtml : `<div class="col-span-2 text-center py-8 text-slate-400 text-xs">Không tìm thấy khách hàng nào hợp lệ.</div>`}
+                        </div>
+                    </div>
+                `;
+            },
+
+            // 5. CSKH TAB
+            renderCskh: function(container) {
+                let filteredList = state.cskh.filter(c => 
+                    c.customerName.toLowerCase().includes(state.searchTerm.toLowerCase())
+                );
+
+                let logsHtml = filteredList.map(log => `
+                    <div class="p-6 hover:bg-slate-50/50 transition-colors">
+                        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                            <div class="flex items-center gap-3">
+                                <span class="text-3xl">
+                                    ${log.channel === 'Gặp trực tiếp' ? '🧑‍🤝‍🧑' : log.channel === 'Gọi điện thoại' ? '📞' : '📧'}
+                                </span>
+                                <div>
+                                    <h3 class="font-bold text-slate-900 text-base">${log.customerName}</h3>
+                                    <div class="flex flex-wrap items-center gap-2 mt-1">
+                                        <span class="text-xs text-slate-500">${log.date}</span>
+                                        <span class="text-slate-300">•</span>
+                                        <span class="px-2.5 py-0.5 bg-indigo-50 text-indigo-700 text-[10px] rounded-full font-bold">${log.channel}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center gap-4 justify-between md:justify-end">
+                                <div class="bg-yellow-50 px-3 py-1.5 rounded-lg border border-yellow-100 flex items-center gap-1.5">
+                                    <span class="text-xs text-slate-500 font-medium">Hài lòng:</span>
+                                    <span class="text-xs text-yellow-500 font-bold">${'★'.repeat(log.rating)}${'☆'.repeat(5 - log.rating)}</span>
+                                </div>
+                                <div class="flex gap-1.5">
+                                    <button onclick="OKR_APP.openCskhModal('${log.id}')" class="p-1.5 hover:bg-slate-100 rounded text-slate-400 hover:text-indigo-600 transition-colors">✏️</button>
+                                    <button onclick="OKR_APP.deleteItem('cskh', '${log.id}')" class="p-1.5 hover:bg-slate-100 rounded text-slate-400 hover:text-rose-600 transition-colors">🗑️</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mt-4 bg-slate-50 p-4 rounded-xl border border-slate-100">
+                            <p class="text-sm text-slate-700 leading-relaxed font-medium">${log.content}</p>
+                        </div>
+                    </div>
+                `).join('');
+
+                container.innerHTML = `
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                        <div>
+                            <h2 class="text-xl font-bold text-slate-900">Chăm sóc khách hàng (CSKH)</h2>
+                            <p class="text-sm text-slate-500">Ghi lại tương tác và đánh giá sao hỗ trợ tính toán chỉ số OKR CSKH.</p>
+                        </div>
+                        <button onclick="OKR_APP.openCskhModal()" class="px-4 py-2.5 bg-yellow-500 hover:bg-yellow-600 text-slate-950 font-semibold rounded-xl shadow-xs transition-colors">+ Thêm Nhật Ký Chăm Sóc</button>
+                    </div>
+
+                    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                        <div class="p-4 border-b border-slate-100 bg-slate-50 flex flex-col sm:flex-row items-center justify-between gap-4">
+                            <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Lịch sử Chăm Sóc</span>
+                            <div class="relative w-full sm:w-auto">
+                                <input type="text" id="cskh-search" placeholder="Tìm theo tên khách hàng..." value="${state.searchTerm}" oninput="OKR_APP.searchData('cskh', this.value)" class="pl-3 pr-8 py-1.5 border border-slate-200 rounded-lg text-xs focus:ring-1 focus:ring-indigo-500 w-full sm:w-60" />
+                            </div>
+                        </div>
+
+                        <div class="divide-y divide-slate-100">
+                            ${logsHtml ? logsHtml : `<div class="text-center py-8 text-slate-400 text-xs">Chưa có nhật ký chăm sóc nào khớp.</div>`}
+                        </div>
+                    </div>
+                `;
+            },
+
+            // 6. TASKS TAB (Kanban style)
+            renderTasks: function(container) {
+                const todoTasks = state.tasks.filter(t => t.status === 'Chưa làm');
+                const doingTasks = state.tasks.filter(t => t.status === 'Đang làm');
+                const doneTasks = state.tasks.filter(t => t.status === 'Đã xong');
+
+                const renderTaskCard = (t) => {
+                    const linkedOkr = state.okrs.find(o => o.id === t.linkedOkrId);
+                    const linkedBadge = linkedOkr 
+                        ? `<div class="bg-indigo-50/50 p-2 rounded-lg border border-indigo-100/50 text-[10px] mt-2">
+                             <span class="block text-slate-400 font-semibold uppercase">Đóng góp OKR:</span>
+                             <span class="text-slate-700 line-clamp-1 font-medium">${linkedOkr.objective}</span>
+                           </div>`
+                        : '';
+
+                    return `
+                        <div class="p-4 bg-white rounded-xl border border-slate-200 hover:shadow-sm transition-shadow space-y-3">
+                            <div class="flex justify-between items-start gap-2">
+                                <h4 class="font-semibold text-slate-900 text-sm leading-snug">${t.title}</h4>
+                                <span class="text-[10px] px-2 py-0.5 rounded-full font-bold shrink-0 ${t.priority === 'Cao' ? 'bg-rose-100 text-rose-800' : t.priority === 'Trung bình' ? 'bg-amber-100 text-amber-800' : 'bg-slate-200 text-slate-800'}">
+                                    ${t.priority}
+                                </span>
+                            </div>
+                            <div class="flex items-center gap-1.5 text-xs text-slate-500">
+                                <span>🕒 Hạn:</span>
+                                <span class="font-semibold text-slate-800">${t.deadline}</span>
+                            </div>
+                            ${linkedBadge}
+                            <div class="flex justify-end gap-2 pt-2 border-t border-slate-100 text-xs">
+                                <button onclick="OKR_APP.openTaskModal('${t.id}')" class="text-indigo-600 hover:underline">Sửa</button>
+                                <span class="text-slate-300">|</span>
+                                <button onclick="OKR_APP.deleteItem('task', '${t.id}')" class="text-rose-600 hover:underline">Xóa</button>
+                            </div>
+                        </div>
+                    `;
+                };
+
+                container.innerHTML = `
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                        <div>
+                            <h2 class="text-xl font-bold text-slate-900">Task Công việc & Hành động</h2>
+                            <p class="text-sm text-slate-500">Quản lý trực quan các đầu việc đóng góp cho các Key Results và OKR tổng quan.</p>
+                        </div>
+                        <button onclick="OKR_APP.openTaskModal()" class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl shadow-xs transition-colors">+ Tạo Task Mới</button>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <!-- Chưa làm -->
+                        <div class="bg-slate-100 p-4 rounded-2xl border border-slate-200/50 min-h-[400px]">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                                    <span class="w-2.5 h-2.5 rounded-full bg-slate-400"></span>
+                                    <span>CHƯA LÀM</span>
+                                </h3>
+                                <span class="px-2 py-0.5 bg-slate-200 text-slate-700 rounded-full text-xs font-bold">${todoTasks.length}</span>
+                            </div>
+                            <div class="space-y-3">
+                                ${todoTasks.map(t => renderTaskCard(t)).join('') || '<div class="text-center py-8 text-slate-400 text-xs">Trống</div>'}
+                            </div>
+                        </div>
+
+                        <!-- Đang làm -->
+                        <div class="bg-indigo-50/50 p-4 rounded-2xl border border-indigo-100 min-h-[400px]">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                                    <span class="w-2.5 h-2.5 rounded-full bg-indigo-500"></span>
+                                    <span>ĐANG LÀM</span>
+                                </h3>
+                                <span class="px-2 py-0.5 bg-indigo-100 text-indigo-700 rounded-full text-xs font-bold">${doingTasks.length}</span>
+                            </div>
+                            <div class="space-y-3">
+                                ${doingTasks.map(t => renderTaskCard(t)).join('') || '<div class="text-center py-8 text-slate-400 text-xs">Trống</div>'}
+                            </div>
+                        </div>
+
+                        <!-- Đã xong -->
+                        <div class="bg-emerald-50/50 p-4 rounded-2xl border border-emerald-100 min-h-[400px]">
+                            <div class="flex justify-between items-center mb-4">
+                                <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2">
+                                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+                                    <span>ĐÃ XONG</span>
+                                </h3>
+                                <span class="px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full text-xs font-bold">${doneTasks.length}</span>
+                            </div>
+                            <div class="space-y-3">
+                                ${doneTasks.map(t => renderTaskCard(t)).join('') || '<div class="text-center py-8 text-slate-400 text-xs">Trống</div>'}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            },
+
+            // Xử lý bộ lọc tìm kiếm text cho từng Tab
+            searchData: function(tab, value) {
+                state.searchTerm = value;
+                // Render lại tab cụ thể mà không chạm vào tab khác
+                const container = document.getElementById('tab-content');
+                if (tab === 'sales') this.renderSales(container);
+                if (tab === 'customers') this.renderCustomers(container);
+                if (tab === 'cskh') this.renderCskh(container);
+            },
+
+            // Thao tác xóa thông minh
+            deleteItem: function(category, id) {
+                customConfirm('Bạn có thật sự chắc chắn muốn xóa dữ liệu này?', () => {
+                    if (category === 'okr') {
+                        state.okrs = state.okrs.filter(o => o.id !== id);
+                        triggerToast('Đã xóa mục tiêu OKR!', 'info');
+                    } else if (category === 'sale') {
+                        state.sales = state.sales.filter(s => s.id !== id);
+                        triggerToast('Đã xóa giao dịch thành công!', 'info');
+                    } else if (category === 'customer') {
+                        state.customers = state.customers.filter(c => c.id !== id);
+                        triggerToast('Đã xóa khách hàng khỏi CRM!', 'info');
+                    } else if (category === 'cskh') {
+                        state.cskh = state.cskh.filter(c => c.id !== id);
+                        triggerToast('Đã xóa nhật ký chăm sóc khách hàng!', 'info');
+                    } else if (category === 'task') {
+                        state.tasks = state.tasks.filter(t => t.id !== id);
+                        triggerToast('Đã xóa tác vụ công việc!', 'info');
+                    }
+                    syncStateToStorage();
+                    this.render();
+                });
+            },
+
+            // ----------------- MODALS CONTROL (Vanilla Dynamic Modals) -----------------
+            closeModal: function() {
+                document.getElementById('modal-wrapper').classList.add('hidden');
+                state.editingItem = null;
+            },
+
+            // 1. Modal Form OKR
+            openOkrModal: function(id = null) {
+                const item = id ? state.okrs.find(o => o.id === id) : null;
+                state.editingItem = item;
+
+                let krsList = item ? item.keyResults : [{ id: 'kr-init', text: '', target: 10, unit: '', autoLink: 'manual' }];
+                
+                let krsFormInputs = krsList.map((kr, idx) => `
+                    <div class="kr-form-row p-3 bg-slate-50 border border-slate-100 rounded-xl space-y-2 relative" data-kr-id="${kr.id}">
+                        <button type="button" onclick="this.parentElement.remove()" class="absolute top-1 right-2 text-rose-500 text-xs hover:underline font-bold">Xóa</button>
+                        <div class="space-y-1">
+                            <span class="text-[10px] text-slate-400 font-bold uppercase block">Mô tả Kết Quả then chốt (KR)</span>
+                            <input required type="text" name="krText" value="${kr.text}" placeholder="VD: Doanh số đạt 100M" class="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs" />
+                        </div>
+                        <div class="grid grid-cols-3 gap-2">
+                            <div>
+                                <span class="text-[9px] text-slate-400 font-semibold block">Chỉ tiêu</span>
+                                <input required type="number" name="krTarget" value="${kr.target}" class="w-full border border-slate-200 rounded-lg px-2 py-1.5 text-xs" />
+                            </div>
+                            <div>
+                                <span class="text-[9px] text-slate-400 font-semibold block">Đơn vị</span>
+                                <input required type="text" name="krUnit" value="${kr.unit}" placeholder="đ, bài, khách..." class="w-full border border-slate-200 rounded-lg px-2 py-1.5 text-xs" />
+                            </div>
+                            <div>
+                                <span class="text-[9px] text-slate-400 font-semibold block">Nguồn liên kết</span>
+                                <select name="krAutoLink" class="w-full border border-slate-200 rounded-lg px-2 py-1.5 text-xs bg-white">
+                                    <option value="manual" ${kr.autoLink === 'manual' ? 'selected' : ''}>Thủ công</option>
+                                    <option value="sales" ${kr.autoLink === 'sales' ? 'selected' : ''}>Doanh thu bán hàng</option>
+                                    <option value="customers-vip" ${kr.autoLink === 'customers-vip' ? 'selected' : ''}>Số khách VIP</option>
+                                    <option value="cskh-rating" ${kr.autoLink === 'cskh-rating' ? 'selected' : ''}>Đánh giá CSKH</option>
+                                    <option value="tasks-high" ${kr.autoLink === 'tasks-high' ? 'selected' : ''}>Task Cao đã xong</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+
+                const wrapper = document.getElementById('modal-container');
+                wrapper.innerHTML = `
+                    <div class="flex justify-between items-center pb-4 border-b">
+                        <h3 class="text-lg font-bold text-slate-900">${item ? 'Sửa OKR Mục tiêu' : 'Thêm OKR Mục tiêu Mới'}</h3>
+                        <button onclick="OKR_APP.closeModal()" class="text-slate-400 hover:text-slate-600 text-xl">✕</button>
+                    </div>
+                    <form id="okr-form" onsubmit="OKR_APP.saveOkrForm(event)" class="space-y-4 mt-4">
+                        <div class="space-y-1">
+                            <label class="text-xs font-bold text-slate-500 uppercase">Mục tiêu tổng quát (Objective)</label>
+                            <input required type="text" name="objective" value="${item ? item.objective : ''}" placeholder="VD: Bứt phá doanh thu & tối ưu CSKH" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500" />
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="space-y-1">
+                                <label class="text-xs font-bold text-slate-500 uppercase">Ngày bắt đầu</label>
+                                <input required type="date" name="startDate" value="${item ? item.startDate : '2026-04-01'}" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm" />
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-xs font-bold text-slate-500 uppercase">Ngày kết thúc</label>
+                                <input required type="date" name="endDate" value="${item ? item.endDate : '2026-06-30'}" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm" />
+                            </div>
+                        </div>
+
+                        <div class="space-y-3 pt-3">
+                            <div class="flex justify-between items-center">
+                                <label class="text-xs font-bold text-slate-500 uppercase">Kết quả then chốt (KRs)</label>
+                                <button type="button" onclick="OKR_APP.addKrRow()" class="text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-3 py-1.5 rounded-lg font-bold">+ Thêm Key Result</button>
+                            </div>
+                            <div id="krs-inputs-list" class="space-y-3 max-h-60 overflow-y-auto pr-1">
+                                ${krsFormInputs}
+                            </div>
+                        </div>
+
+                        <div class="flex justify-end gap-3 pt-4 border-t">
+                            <button type="button" onclick="OKR_APP.closeModal()" class="px-4 py-2 border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-xl text-sm font-semibold">Hủy</button>
+                            <button type="submit" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-semibold">Lưu OKR</button>
+                        </div>
+                    </form>
+                `;
+                document.getElementById('modal-wrapper').classList.remove('hidden');
+            },
+
+            addKrRow: function() {
+                const list = document.getElementById('krs-inputs-list');
+                const rowId = `kr-${Date.now()}`;
+                const newRow = document.createElement('div');
+                newRow.className = "kr-form-row p-3 bg-slate-50 border border-slate-100 rounded-xl space-y-2 relative";
+                newRow.setAttribute('data-kr-id', rowId);
+                newRow.innerHTML = `
+                    <button type="button" onclick="this.parentElement.remove()" class="absolute top-1 right-2 text-rose-500 text-xs hover:underline font-bold">Xóa</button>
+                    <div class="space-y-1">
+                        <span class="text-[10px] text-slate-400 font-bold uppercase block">Mô tả Kết Quả then chốt (KR)</span>
+                        <input required type="text" name="krText" placeholder="Mô tả số liệu then chốt cần đo lường" class="w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs" />
+                    </div>
+                    <div class="grid grid-cols-3 gap-2">
+                        <div>
+                            <span class="text-[9px] text-slate-400 font-semibold block">Chỉ tiêu</span>
+                            <input required type="number" name="krTarget" value="10" class="w-full border border-slate-200 rounded-lg px-2 py-1.5 text-xs" />
+                        </div>
+                        <div>
+                            <span class="text-[9px] text-slate-400 font-semibold block">Đơn vị</span>
+                            <input required type="text" name="krUnit" placeholder="đ, bài, khách..." class="w-full border border-slate-200 rounded-lg px-2 py-1.5 text-xs" />
+                        </div>
+                        <div>
+                            <span class="text-[9px] text-slate-400 font-semibold block">Nguồn liên kết</span>
+                            <select name="krAutoLink" class="w-full border border-slate-200 rounded-lg px-2 py-1.5 text-xs bg-white">
+                                <option value="manual">Thủ công</option>
+                                <option value="sales">Doanh thu bán hàng</option>
+                                <option value="customers-vip">Số khách VIP</option>
+                                <option value="cskh-rating">Đánh giá CSKH</option>
+                                <option value="tasks-high">Task Cao đã xong</option>
+                            </select>
+                        </div>
+                    </div>
+                `;
+                list.appendChild(newRow);
+            },
+
+            saveOkrForm: function(e) {
+                e.preventDefault();
+                const form = document.getElementById('okr-form');
+                const objective = form.elements['objective'].value;
+                const startDate = form.elements['startDate'].value;
+                const endDate = form.elements['endDate'].value;
+
+                // Thu thập các row KRs
+                const krRows = document.querySelectorAll('.kr-form-row');
+                const keyResults = [];
+                krRows.forEach((row, index) => {
+                    const text = row.querySelector('[name="krText"]').value;
+                    const target = parseFloat(row.querySelector('[name="krTarget"]').value) || 0;
+                    const unit = row.querySelector('[name="krUnit"]').value;
+                    const autoLink = row.querySelector('[name="krAutoLink"]').value;
+                    
+                    // Giữ lại ID cũ nếu đang sửa
+                    const oldKrId = row.getAttribute('data-kr-id');
+                    const krId = (oldKrId && oldKrId !== 'kr-init') ? oldKrId : `kr-${Date.now()}-${index}`;
+                    
+                    // Tìm current cũ nếu có
+                    let current = 0;
+                    if (state.editingItem) {
+                        const existingKr = state.editingItem.keyResults.find(k => k.id === krId);
+                        if (existingKr) current = existingKr.current;
+                    }
+
+                    keyResults.push({ id: krId, text, current, target, unit, autoLink });
+                });
+
+                if (state.editingItem) {
+                    state.okrs = state.okrs.map(o => o.id === state.editingItem.id 
+                        ? { ...o, objective, startDate, endDate, keyResults } 
+                        : o
+                    );
+                    triggerToast('Cập nhật mục tiêu OKR thành công!');
+                } else {
+                    const newOkr = {
+                        id: `okr-${Date.now()}`,
+                        objective,
+                        startDate,
+                        endDate,
+                        keyResults
+                    };
+                    state.okrs.push(newOkr);
+                    triggerToast('Thêm mới OKR thành công!');
+                }
+
+                this.closeModal();
+                this.render();
+            },
+
+            // 2. Modal Giao dịch bán hàng
+            openSaleModal: function(id = null) {
+                const item = id ? state.sales.find(s => s.id === id) : null;
+                state.editingItem = item;
+
+                let customerOptions = state.customers.map(c => `
+                    <option value="${c.name}" ${item && item.customerName === c.name ? 'selected' : ''}>${c.name} (${c.segment})</option>
+                `).join('');
+
+                const wrapper = document.getElementById('modal-container');
+                wrapper.innerHTML = `
+                    <div class="flex justify-between items-center pb-4 border-b">
+                        <h3 class="text-lg font-bold text-slate-900">${item ? 'Sửa giao dịch bán hàng' : 'Ghi nhận Doanh số Giao dịch'}</h3>
+                        <button onclick="OKR_APP.closeModal()" class="text-slate-400 hover:text-slate-600 text-xl">✕</button>
+                    </div>
+                    <form id="sale-form" onsubmit="OKR_APP.saveSaleForm(event)" class="space-y-4 mt-4">
+                        <div class="space-y-1">
+                            <label class="text-xs font-bold text-slate-500 uppercase">Sản phẩm / Dự án triển khai</label>
+                            <input required type="text" name="product" value="${item ? item.product : ''}" placeholder="VD: Thiết kế Website LandPage" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm" />
+                        </div>
+
+                        <div class="space-y-1">
+                            <label class="text-xs font-bold text-slate-500 uppercase">Khách hàng liên kết</label>
+                            <select name="customerName" required class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm bg-white">
+                                <option value="">Chọn khách hàng từ CRM...</option>
+                                ${customerOptions}
+                            </select>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="space-y-1">
+                                <label class="text-xs font-bold text-slate-500 uppercase">Doanh thu đạt (VND)</label>
+                                <input required type="number" name="amount" value="${item ? item.amount : ''}" placeholder="VD: 15000000" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm" />
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-xs font-bold text-slate-500 uppercase">Ngày ghi nhận</label>
+                                <input required type="date" name="date" value="${item ? item.date : '2026-05-29'}" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm" />
+                            </div>
+                        </div>
+
+                        <div class="space-y-1">
+                            <label class="text-xs font-bold text-slate-500 uppercase">Trạng thái thanh toán</label>
+                            <div class="flex gap-4 pt-1">
+                                <label class="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+                                    <input type="radio" name="status" value="Đã thanh toán" ${(!item || item.status === 'Đã thanh toán') ? 'checked' : ''} class="accent-indigo-600" />
+                                    <span>Đã thanh toán</span>
+                                </label>
+                                <label class="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+                                    <input type="radio" name="status" value="Chờ thanh toán" ${(item && item.status === 'Chờ thanh toán') ? 'checked' : ''} class="accent-indigo-600" />
+                                    <span>Chờ thanh toán</span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-end gap-3 pt-4 border-t">
+                            <button type="button" onclick="OKR_APP.closeModal()" class="px-4 py-2 border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-xl text-sm font-semibold">Hủy</button>
+                            <button type="submit" class="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-sm font-semibold">Lưu Giao dịch</button>
+                        </div>
+                    </form>
+                `;
+                document.getElementById('modal-wrapper').classList.remove('hidden');
+            },
+
+            saveSaleForm: function(e) {
+                e.preventDefault();
+                const form = document.getElementById('sale-form');
+                const product = form.elements['product'].value;
+                const customerName = form.elements['customerName'].value;
+                const amount = parseFloat(form.elements['amount'].value) || 0;
+                const date = form.elements['date'].value;
+                const status = form.querySelector('input[name="status"]:checked').value;
+
+                if (state.editingItem) {
+                    state.sales = state.sales.map(s => s.id === state.editingItem.id 
+                        ? { ...s, product, customerName, amount, date, status } 
+                        : s
+                    );
+                    triggerToast('Đã sửa giao dịch bán hàng!');
+                } else {
+                    const newSale = {
+                        id: `sale-${Date.now()}`,
+                        product,
+                        customerName,
+                        amount,
+                        date,
+                        status
+                    };
+                    state.sales.unshift(newSale);
+                    triggerToast('Ghi nhận thành công giao dịch bán hàng mới!');
+                }
+
+                this.closeModal();
+                this.render();
+            },
+
+            // 3. Modal CRM Khách hàng
+            openCustomerModal: function(id = null) {
+                const item = id ? state.customers.find(c => c.id === id) : null;
+                state.editingItem = item;
+
+                const wrapper = document.getElementById('modal-container');
+                wrapper.innerHTML = `
+                    <div class="flex justify-between items-center pb-4 border-b">
+                        <h3 class="text-lg font-bold text-slate-900">${item ? 'Sửa thông tin khách hàng' : 'Thêm mới khách hàng CRM'}</h3>
+                        <button onclick="OKR_APP.closeModal()" class="text-slate-400 hover:text-slate-600 text-xl">✕</button>
+                    </div>
+                    <form id="customer-form" onsubmit="OKR_APP.saveCustomerForm(event)" class="space-y-4 mt-4">
+                        <div class="space-y-1">
+                            <label class="text-xs font-bold text-slate-500 uppercase">Họ và Tên</label>
+                            <input required type="text" name="name" value="${item ? item.name : ''}" placeholder="VD: Nguyễn Văn A" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm" />
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="space-y-1">
+                                <label class="text-xs font-bold text-slate-500 uppercase">Số điện thoại</label>
+                                <input required type="text" name="phone" value="${item ? item.phone : ''}" placeholder="0901234567" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm" />
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-xs font-bold text-slate-500 uppercase">Email</label>
+                                <input type="email" name="email" value="${item ? item.email : ''}" placeholder="nva@company.com" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm" />
+                            </div>
+                        </div>
+
+                        <div class="space-y-1">
+                            <label class="text-xs font-bold text-slate-500 uppercase">Phân khúc đối tác</label>
+                            <select name="segment" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm bg-white">
+                                <option value="Mới" ${(!item || item.segment === 'Mới') ? 'selected' : ''}>Mới (New Lead)</option>
+                                <option value="Thường" ${(item && item.segment === 'Thường') ? 'selected' : ''}>Thường</option>
+                                <option value="VIP" ${(item && item.segment === 'VIP') ? 'selected' : ''}>VIP (Khách hàng Trọng điểm)</option>
+                            </select>
+                        </div>
+
+                        <div class="space-y-1">
+                            <label class="text-xs font-bold text-slate-500 uppercase">Đặc điểm / Ghi chú</label>
+                            <textarea name="notes" rows="3" placeholder="Yêu cầu riêng biệt, sở thích, thông tin bên lề..." class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm">${item ? item.notes : ''}</textarea>
+                        </div>
+
+                        <div class="flex justify-end gap-3 pt-4 border-t">
+                            <button type="button" onclick="OKR_APP.closeModal()" class="px-4 py-2 border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-xl text-sm font-semibold">Hủy</button>
+                            <button type="submit" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-semibold">Lưu khách hàng</button>
+                        </div>
+                    </form>
+                `;
+                document.getElementById('modal-wrapper').classList.remove('hidden');
+            },
+
+            saveCustomerForm: function(e) {
+                e.preventDefault();
+                const form = document.getElementById('customer-form');
+                const name = form.elements['name'].value;
+                const phone = form.elements['phone'].value;
+                const email = form.elements['email'].value;
+                const segment = form.elements['segment'].value;
+                const notes = form.elements['notes'].value;
+
+                if (state.editingItem) {
+                    state.customers = state.customers.map(c => c.id === state.editingItem.id 
+                        ? { ...c, name, phone, email, segment, notes } 
+                        : c
+                    );
+                    triggerToast('Đã sửa thông tin khách hàng thành công!');
+                } else {
+                    const newCust = {
+                        id: `cust-${Date.now()}`,
+                        name,
+                        phone,
+                        email,
+                        segment,
+                        notes
+                    };
+                    state.customers.push(newCust);
+                    triggerToast('Thêm khách hàng thành công vào CRM!');
+                }
+
+                this.closeModal();
+                this.render();
+            },
+
+            // 4. Modal Nhật ký CSKH
+            openCskhModal: function(id = null) {
+                const item = id ? state.cskh.find(c => c.id === id) : null;
+                state.editingItem = item;
+
+                let customerOptions = state.customers.map(c => `
+                    <option value="${c.name}" ${item && item.customerName === c.name ? 'selected' : ''}>${c.name}</option>
+                `).join('');
+
+                const wrapper = document.getElementById('modal-container');
+                wrapper.innerHTML = `
+                    <div class="flex justify-between items-center pb-4 border-b">
+                        <h3 class="text-lg font-bold text-slate-900">${item ? 'Sửa lịch sử chăm sóc' : 'Thêm mới nhật ký CSKH'}</h3>
+                        <button onclick="OKR_APP.closeModal()" class="text-slate-400 hover:text-slate-600 text-xl">✕</button>
+                    </div>
+                    <form id="cskh-form" onsubmit="OKR_APP.saveCskhForm(event)" class="space-y-4 mt-4">
+                        <div class="space-y-1">
+                            <label class="text-xs font-bold text-slate-500 uppercase">Khách hàng liên hệ</label>
+                            <select name="customerName" required class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm bg-white">
+                                <option value="">Chọn khách hàng...</option>
+                                ${customerOptions}
+                            </select>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="space-y-1">
+                                <label class="text-xs font-bold text-slate-500 uppercase">Ngày tương tác</label>
+                                <input required type="date" name="date" value="${item ? item.date : '2026-05-29'}" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm" />
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-xs font-bold text-slate-500 uppercase">Kênh hỗ trợ</label>
+                                <select name="channel" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm bg-white">
+                                    <option value="Gọi điện thoại" ${(!item || item.channel === 'Gọi điện thoại') ? 'selected' : ''}>Gọi điện thoại</option>
+                                    <option value="Email" ${(item && item.channel === 'Email') ? 'selected' : ''}>Email</option>
+                                    <option value="Gặp trực tiếp" ${(item && item.channel === 'Gặp trực tiếp') ? 'selected' : ''}>Gặp trực tiếp</option>
+                                    <option value="Zalo/Chat" ${(item && item.channel === 'Zalo/Chat') ? 'selected' : ''}>Zalo/Tin nhắn</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="space-y-1">
+                            <label class="text-xs font-bold text-slate-500 uppercase">Nội dung chi tiết tương tác</label>
+                            <textarea required name="content" rows="4" placeholder="Nhập tóm tắt phản hồi khách hàng và phương án giải quyết..." class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm">${item ? item.content : ''}</textarea>
+                        </div>
+
+                        <div class="space-y-1">
+                            <label class="text-xs font-bold text-slate-500 uppercase">Mức độ hài lòng của Khách hàng</label>
+                            <select name="rating" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm bg-white text-yellow-600 font-bold">
+                                <option value="5" ${(!item || item.rating === 5) ? 'selected' : ''}>⭐⭐⭐⭐⭐ (Rất tốt)</option>
+                                <option value="4" ${(item && item.rating === 4) ? 'selected' : ''}>⭐⭐⭐⭐ (Tốt)</option>
+                                <option value="3" ${(item && item.rating === 3) ? 'selected' : ''}>⭐⭐⭐ (Bình thường)</option>
+                                <option value="2" ${(item && item.rating === 2) ? 'selected' : ''}>⭐⭐ (Kém)</option>
+                                <option value="1" ${(item && item.rating === 1) ? 'selected' : ''}>⭐ (Rất kém)</option>
+                            </select>
+                        </div>
+
+                        <div class="flex justify-end gap-3 pt-4 border-t">
+                            <button type="button" onclick="OKR_APP.closeModal()" class="px-4 py-2 border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-xl text-sm font-semibold">Hủy</button>
+                            <button type="submit" class="px-5 py-2 bg-yellow-500 hover:bg-yellow-600 text-slate-950 font-bold rounded-xl text-sm">Lưu nhật ký</button>
+                        </div>
+                    </form>
+                `;
+                document.getElementById('modal-wrapper').classList.remove('hidden');
+            },
+
+            saveCskhForm: function(e) {
+                e.preventDefault();
+                const form = document.getElementById('cskh-form');
+                const customerName = form.elements['customerName'].value;
+                const date = form.elements['date'].value;
+                const channel = form.elements['channel'].value;
+                const content = form.elements['content'].value;
+                const rating = parseInt(form.elements['rating'].value) || 5;
+
+                if (state.editingItem) {
+                    state.cskh = state.cskh.map(c => c.id === state.editingItem.id 
+                        ? { ...c, customerName, date, channel, content, rating } 
+                        : c
+                    );
+                    triggerToast('Đã sửa nhật ký CSKH!');
+                } else {
+                    const newLog = {
+                        id: `cskh-${Date.now()}`,
+                        customerName,
+                        date,
+                        channel,
+                        content,
+                        rating
+                    };
+                    state.cskh.unshift(newLog);
+                    triggerToast('Ghi nhận nhật ký tương tác CSKH thành công!');
+                }
+
+                this.closeModal();
+                this.render();
+            },
+
+            // 5. Modal Công việc Tasks
+            openTaskModal: function(id = null) {
+                const item = id ? state.tasks.find(t => t.id === id) : null;
+                state.editingItem = item;
+
+                let okrOptions = state.okrs.map(o => `
+                    <option value="${o.id}" ${item && item.linkedOkrId === o.id ? 'selected' : ''}>${o.objective}</option>
+                `).join('');
+
+                const wrapper = document.getElementById('modal-container');
+                wrapper.innerHTML = `
+                    <div class="flex justify-between items-center pb-4 border-b">
+                        <h3 class="text-lg font-bold text-slate-900">${item ? 'Sửa tác vụ công việc' : 'Thêm mới công việc'}</h3>
+                        <button onclick="OKR_APP.closeModal()" class="text-slate-400 hover:text-slate-600 text-xl">✕</button>
+                    </div>
+                    <form id="task-form" onsubmit="OKR_APP.saveTaskForm(event)" class="space-y-4 mt-4">
+                        <div class="space-y-1">
+                            <label class="text-xs font-bold text-slate-500 uppercase">Tiêu đề công việc</label>
+                            <input required type="text" name="title" value="${item ? item.title : ''}" placeholder="VD: Thiết kế Dashboard" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm" />
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="space-y-1">
+                                <label class="text-xs font-bold text-slate-500 uppercase">Hạn hoàn thành</label>
+                                <input required type="date" name="deadline" value="${item ? item.deadline : '2026-05-29'}" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm" />
+                            </div>
+                            <div class="space-y-1">
+                                <label class="text-xs font-bold text-slate-500 uppercase">Độ ưu tiên</label>
+                                <select name="priority" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm bg-white">
+                                    <option value="Thấp" ${(!item || item.priority === 'Thấp') ? 'selected' : ''}>Thấp</option>
+                                    <option value="Trung bình" ${(item && item.priority === 'Trung bình') ? 'selected' : ''}>Trung bình</option>
+                                    <option value="Cao" ${(item && item.priority === 'Cao') ? 'selected' : ''}>Cao 🔥</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="space-y-1">
+                            <label class="text-xs font-bold text-slate-500 uppercase">Trạng thái hiện tại</label>
+                            <select name="status" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm bg-white">
+                                <option value="Chưa làm" ${(!item || item.status === 'Chưa làm') ? 'selected' : ''}>Chưa làm</option>
+                                <option value="Đang làm" ${(item && item.status === 'Đang làm') ? 'selected' : ''}>Đang làm</option>
+                                <option value="Đã xong" ${(item && item.status === 'Đã xong') ? 'selected' : ''}>Đã xong</option>
+                            </select>
+                        </div>
+
+                        <div class="space-y-1">
+                            <label class="text-xs font-bold text-slate-500 uppercase">Liên kết tới OKR Mục tiêu</label>
+                            <select name="linkedOkrId" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm bg-white">
+                                <option value="">Không liên kết (General Task)</option>
+                                ${okrOptions}
+                            </select>
+                        </div>
+
+                        <div class="flex justify-end gap-3 pt-4 border-t">
+                            <button type="button" onclick="OKR_APP.closeModal()" class="px-4 py-2 border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-xl text-sm font-semibold">Hủy</button>
+                            <button type="submit" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-semibold">Lưu công việc</button>
+                        </div>
+                    </form>
+                `;
+                document.getElementById('modal-wrapper').classList.remove('hidden');
+            },
+
+            saveTaskForm: function(e) {
+                e.preventDefault();
+                const form = document.getElementById('task-form');
+                const title = form.elements['title'].value;
+                const deadline = form.elements['deadline'].value;
+                const priority = form.elements['priority'].value;
+                const status = form.elements['status'].value;
+                const linkedOkrId = form.elements['linkedOkrId'].value;
+
+                if (state.editingItem) {
+                    state.tasks = state.tasks.map(t => t.id === state.editingItem.id 
+                        ? { ...t, title, deadline, priority, status, linkedOkrId } 
+                        : t
+                    );
+                    triggerToast('Đã cập nhật công việc!');
+                } else {
+                    const newT = {
+                        id: `task-${Date.now()}`,
+                        title,
+                        deadline,
+                        priority,
+                        status,
+                        linkedOkrId
+                    };
+                    state.tasks.push(newT);
+                    triggerToast('Thêm mới công việc thành công!');
+                }
+
+                this.closeModal();
+                this.render();
+            }
+        };
+
+        // ----------------- KHỞI CHẠY ỨNG DỤNG LẦN ĐẦU -----------------
+        window.addEventListener('DOMContentLoaded', () => {
+            // Chạy Render tab mặc định 'dashboard'
+            OKR_APP.render();
+        });
     </script>
 </body>
 </html>
